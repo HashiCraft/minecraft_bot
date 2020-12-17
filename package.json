@@ -1,0 +1,18 @@
+{
+  "name": "bot_test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mineflayer": "^2.34.0",
+    "mineflayer-pathfinder": "file:/home/nicj/go/src/github.com/PrismarineJS/mineflayer-pathfinder",
+    "mineflayer-pvp": "^1.0.2",
+    "mineflayer-statemachine": "^1.5.1",
+    "prismarine-viewer": "^1.8.0"
+  }
+}
