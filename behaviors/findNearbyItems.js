@@ -38,7 +38,7 @@ class BehaviorMineNearbyItems {
     checkNearby() {
       // if there is Lava nearby do not mine
       const lava = this.bot.findBlock({
-        matching: ['lava'].map(
+        matching: ['lava','water'].map(
           name => this.mcData.blocksByName[name].id), maxDistance: 8
       })
       
@@ -106,7 +106,7 @@ class BehaviorMineNearbyItems {
             return
           }
 
-          console.log("Mining item : ", block.name)
+          console.log("Mining nearby item : ", block.name)
           self.bot.dig(block, function() {
             //console.log("Completed mining", block.name)
             self.mineItem(items) 

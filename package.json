@@ -13,6 +13,7 @@
     "mineflayer-pathfinder": "file:/home/nicj/go/src/github.com/PrismarineJS/mineflayer-pathfinder",
     "mineflayer-pvp": "^1.0.2",
     "mineflayer-statemachine": "^1.5.1",
+    "node-flag": "^1.5.1",
     "prismarine-viewer": "^1.8.0"
   }
 }

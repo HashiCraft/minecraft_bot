@@ -20,17 +20,16 @@ class BehaviorDropTorch {
         this.bot = bot;
         this.targets = targets;
         this.canelled = true
-
-        if (!this.targets.lastTorchDrop){
-          this.targets.lastTorchDrop = new Vec3(this.bot.entity.position.x, this.bot.entity.position.y, this.bot.entity.position.z)
-        }
-      
         this.mcData = this.bot.mcData
     }
     
     onStateEntered() {
       this.active = true
       this.cancelled = false
+        
+      if (!this.targets.lastTorchDrop){
+        this.targets.lastTorchDrop = new Vec3(this.bot.entity.position.x, this.bot.entity.position.y, this.bot.entity.position.z)
+      }
 
       // only drop a torch if we are 5 squares from the last torch and
       const xDist = this.bot.entity.position.x - this.targets.lastTorchDrop.x

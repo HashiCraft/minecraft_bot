@@ -19,13 +19,6 @@ class BehaviorSetMiningTarget {
         this.active = false;
         this.bot = bot;
         this.targets = targets;
-      
-        if (!this.targets.lastPos) {
-          console.log("No last position, setting to mine start pos", this.targets.mineStart)
-
-          this.targets.lastPos = new Vec3(this.targets.mineStart.x, this.targets.mineStart.y, this.targets.mineStart.z)
-        }
-
         this.targets.colDone = false
         this.targets.allDone = false
     }
@@ -50,12 +43,15 @@ class BehaviorSetMiningTarget {
 
       const xDistCurAbs = (xDistCur < 0) ? xDistCur*-1 : xDistCur // 59
       const zDistCurAbs = (zDistCur < 0) ? zDistCur*-1 : zDistCur // 2
-    
+   
+      //console.log("last:", this.targets.lastPos)
+      //console.log("mineStart:", this.targets.mineStart)
+      //console.log("mineEnd:", this.targets.mineEnd)
       //console.log("xDistMax:", xDistMax, "zDistMax", zDistMax, "xDistCur", xDistCur, "zDistCur", zDistCur)
       //console.log("xDistMaxAbs:", xDistMaxAbs, "zDistMaxAbs", zDistMaxAbs, "xDistCurAbs", xDistCurAbs, "zDistCurAbs", zDistCurAbs)
       
       if (xDistCurAbs <= 0 && zDistCurAbs <= 0) {
-        //console.log("Cant move any further, all done")
+        console.log("Cant move any further, all done")
         
         // we can not move set the position to 0
         this.targets.colDone = true

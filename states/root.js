@@ -25,16 +25,27 @@ function createRootState(bot, targets) {
         parent: idle,
         child: getToolsState,
         name: "get a pickaxe",
-        shouldTransition: () => !bot.hasTools(),
-        onTransition: () => console.log("doMine.get_tools"),
+        shouldTransition: () => !bot.hasTools() || !bot.hasWeapons(),
+        onTransition: () => console.log("root.get_tools"),
+    }),
+    
+    new StateTransition({
+        parent: getToolsState,
+        child: idleEnd,
+        name: "end mining",
+        shouldTransition: () => getToolsState.isFinished() && !bot.hasTools(),
+        onTransition: () => {
+          console.log("root.no_tools_end")
+          targets.noTools = true
+        }
     }),
     
     new StateTransition({
         parent: getToolsState,
         child: moveStart,
         name: "start mining",
-        shouldTransition: () => getToolsState.isFinished(),
-        onTransition: () => console.log("doMine.got_tools_move_start"),
+        shouldTransition: () => getToolsState.isFinished() && bot.hasTools(),
+        onTransition: () => console.log("root.got_tools_move_start"),
     }),
     // end needs tools
    
@@ -44,7 +55,7 @@ function createRootState(bot, targets) {
         child: moveStart,
         name: "start mining",
         shouldTransition: () => bot.hasTools(),
-        onTransition: () => console.log("doMine.move_start"),
+        onTransition: () => console.log("root.move_start"),
     }),
    
     new StateTransition({
@@ -52,7 +63,7 @@ function createRootState(bot, targets) {
         child: doMineState,
         name: "start mining",
         shouldTransition: () => moveStart.isFinished(),
-        onTransition: () => console.log("doMine.start_mining"),
+        onTransition: () => console.log("root.start_mining"),
     }),
    
     // done with the column
@@ -61,7 +72,7 @@ function createRootState(bot, targets) {
         child: incrementColumn,
         name: "continue mining",
         shouldTransition: () =>  doMineState.isFinished(),
-        onTransition: () => console.log("doMine.increment_column"),
+        onTransition: () => console.log("root.increment_column"),
     }),
    
     // mine the next column
@@ -70,7 +81,7 @@ function createRootState(bot, targets) {
         child: doMineState,
         name: "continue mining",
         shouldTransition: () =>  !targets.allDone,
-        onTransition: () => console.log("doMine.column_incremented_start_mining"),
+        onTransition: () => console.log("root.column_incremented_start_mining"),
     }),
   
     // nothing left to mine
@@ -80,9 +91,9 @@ function createRootState(bot, targets) {
         name: "all complete",
         shouldTransition: () => targets.allDone,
         onTransition: () => {
-          console.log("doMine.dropped_items_quitting")
+          console.log("root.dropped_items_finished")
 
-          bot.quit('I am done mining, going for a coffee, don\'t bother me')
+          bot.chat('I am done mining, going for a coffee, don\'t bother me')
         },
     }),
   ]

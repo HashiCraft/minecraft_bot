@@ -37,6 +37,10 @@ class BehaviorFightMobs {
         this.bot.on('startedAttacking', () => {
           console.log('Started attacking')
         })
+
+        this.bot.on('death', () => {
+          self.onStateExited()
+        })
       
         this.mcData = this.bot.mcData
     }
@@ -51,6 +55,17 @@ class BehaviorFightMobs {
         this.bot.chat('You want to fight, then fight me')
         this.bot.chat('It\'s cloberin time, (pop down to the mine and clean up my mess please)')
         console.log('Fighting mob', mob.name)
+      
+        const sword = this.bot.getSword()
+        const shield = this.bot.getShield()
+
+        if (!sword) {
+          this.bot.chat('You want me to fight a ' + mob.name +'  with no weapons, I can see this going well')
+          console.log('Weapon inventory sword: ', sword, 'shield:', shield)
+
+          this.bot.pvp.attack(mob)
+          return
+        }
 
         // Start attacking
         this.equipWeaponsAndFight(mob)
@@ -58,12 +73,16 @@ class BehaviorFightMobs {
     }
     
     onStateExited() {
+      console.log('exit fight behavior') 
       this.bot.pvp.stop()
       this.cancelled = true
       this.active = false
     }
 
     getMobToFight() {
+      if(this.cancelled)
+        return
+
       // Only look for mobs within 16 blocks
       const filter = e => e.type === 'mob' && e.position.distanceTo(this.bot.entity.position) < 16 &&
       e.mobType !== 'Armor Stand' // Mojang classifies armor stands as mobs for some reason?
@@ -81,42 +100,21 @@ class BehaviorFightMobs {
       }
     }
 
-    getShield() {
-      // shield can be equipped so check hands first
-      const slot = this.bot.inventory.slots[this.bot.getEquipmentDestSlot('off-hand')];
-      if (slot && slot.name.includes('shield'))
-        return slot
-      
-      return this.bot.inventory.findInventoryItem(this.mcData.itemsByName["shield"].id, null);
-    }
-
     equipWeaponsAndFight(mob) {
-      const sword = this.bot.inventory.findInventoryItem(this.mcData.itemsByName["iron_sword"].id, null);
-      const shield = this.getShield()
-
-      if (!sword || !shield) {
-        this.bot.chat('You want me to fight with no weapons, you gotta be kidding')
-        console.log('Weapon inventory sword: ', sword, 'shield:', shield)
-        
-        this.active = false
-        return
-      }
-
+      const sword = this.bot.getSword()
+      const shield = this.bot.getShield()
       const self = this
+
       this.bot.unequip('hand', () => {
         self.bot.equip(sword, 'hand', (error) => {
           if(error) {
             console.log('Unable to equip sword')
-            self.active = false
-            return 
           }
       
           self.bot.unequip('off-hand', () => {
             self.bot.equip(shield, 'off-hand', (error) => {
               if(error) {
                 console.log('Unable to equip shield')
-                self.active = false
-                return 
               }
 
               this.bot.pvp.attack(mob)

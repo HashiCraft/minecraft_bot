@@ -24,7 +24,10 @@ function createGetToolsState(bot, targets) {
         child: moveChest,
         name: "get a pickaxe",
         shouldTransition: () => true,
-        onTransition: () => console.log("getToolsState.move_to_chest"),
+        onTransition: () => {
+          console.log("getToolsState.move_to_chest"),
+          myTargets.position = targets.equipmentChestLocation
+        }
     }),
   
     new StateTransition({
@@ -41,7 +44,7 @@ function createGetToolsState(bot, targets) {
         onTransition: () => {
           console.log("getToolsState.itemsMissing")
 
-          bot.quit('Since I can`t find the tools I need, I am off before a zombie gets me.')
+          bot.chat('I can`t find the tools I need, could you sort that out please before a zombie gets me.')
         },
     }),
     

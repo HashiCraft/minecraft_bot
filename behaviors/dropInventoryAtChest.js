@@ -38,7 +38,7 @@ class BehaviorDropInventoryAtChest {
       })
 
       if (!chestToOpen) {
-        console.log("Unable to find chest")
+        console.log("Unable to find chest at location", this.targets.position)
         this.active = false
         return
       }
@@ -91,31 +91,44 @@ class BehaviorDropInventoryAtChest {
       }
      
       // do not deposit our tools
-      if (
-        item.name === 'iron_pickaxe' || 
-        item.name === 'torch' || 
-        item.name === 'melon_slice' ||
-        item.name === 'iron_sword' || 
-        item.name === 'shield' ||
-        item.name === 'iron_shovel'
-      ) {
+      if (!this.shouldDeposit(item)) {
         this.depositItem(chest, items)
         return
       }
 
-      const self = this
       console.log("Adding " + item.count + " " + item.displayName + " to the chest")
+      const self = this
       chest.deposit(item.type, item.metadata, item.count, function(error) {
         if (error) {
           console.log("Error adding items to chest", error)
           self.depositItem(chest, items)
         }
 
-        self.bot.chat("Added " + item.count + " " + item.displayName + " to the chest")
         console.log("Added " + item.count + " " + item.displayName + " to the chest")
 
         self.depositItem(chest, items)
       })
+    }
+
+    shouldDeposit(item) {
+      const equipmentList = [
+        {name: 'pickaxe', required: true, count: 1}, 
+        {name: 'melon_slice', required: true, count: 64}, 
+        {name: 'torch', required: true, count: 64},
+        {name: 'sword', required: false, count: 1},
+        {name: 'shield', required: false, count: 1},
+        {name: 'shovel', required: false, count: 1},
+      ]
+        
+      var deposit = true
+
+      equipmentList.forEach((di) => {
+        if(item.name.includes(di.name)) {
+          deposit = false
+        }
+      })
+
+      return deposit
     }
 
     isFinished() {

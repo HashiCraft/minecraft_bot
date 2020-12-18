@@ -18,7 +18,16 @@ class BehaviorGetEquipmentFromChest {
         this.cancelled = true;
         this.bot = bot;
         this.targets = targets;
-        this.equipmentList = ['iron_pickaxe', 'iron_sword', 'shield', 'melon_slice', 'torch', 'iron_shovel']
+
+        this.equipmentList = [
+          {name: 'pickaxe', required: true, count: 1}, 
+          {name: 'melon_slice', required: true, count: 64}, 
+          {name: 'torch', required: true, count: 64},
+          {name: 'sword', required: false, count: 1},
+          {name: 'shield', required: false, count: 1},
+          {name: 'shovel', required: false, count: 1},
+        ]
+
         this.mcData = this.bot.mcData
         this.itemsMissing = false
     }
@@ -26,6 +35,7 @@ class BehaviorGetEquipmentFromChest {
     onStateEntered() {
       this.active = true
       this.cancelled = false
+      this.itemsMissing = false
 
       // find a chest
       const chestToOpen = this.bot.findBlock({
@@ -69,8 +79,8 @@ class BehaviorGetEquipmentFromChest {
       // check if we have the item
       // can be equipped so check hands first
       var inventoryItem = this.bot.inventory.slots[this.bot.getEquipmentDestSlot('off-hand')];
-      if (!inventoryItem || !inventoryItem.name.includes(item)) {
-        inventoryItem = this.bot.inventory.findInventoryItem(this.mcData.itemsByName[item].id, null);
+      if (!inventoryItem || !inventoryItem.name.includes(item.name)) {
+        inventoryItem = this.bot.findInventoryItem(item.name)
       }
 
       if (inventoryItem) {
@@ -79,27 +89,42 @@ class BehaviorGetEquipmentFromChest {
         return
       }
       
-      console.log('Fetching ' + item + ' from chest')
-      const item_count = chest.count(this.mcData.itemsByName[item].id) 
-      if (item_count < 1) {
-        this.bot.chat("How I am supposed to get a " + item + " when there is not one in the chest?")
-        console.log("No " + item + " in chest")
+      console.log('Fetching ' + item.name + ' from chest')
+      const item_id = this.getItemId(item.name, chest)
+
+      if (!item_id && item.required) {
+        this.bot.chat("How I am supposed to get a " + item.name + " when there is not one in the chest?")
+        console.log("No " + item_id + " " + item.name + " in chest")
+
         this.active = false
         this.targets.itemsMissing = true
+
         chest.close()
         return
       } else {
+        var itemsToFetch = chest.count(item_id, null) //12
+
+        itemsToFetch = (itemsToFetch < item.count) ? itemsToFetch : item.count
+
         const self = this
-
-        var itemsToFetch = 1
-        if (item === 'melon_slice' || item === 'torch') {
-          itemsToFetch = (item_count > 64) ? 64 : item_count
-        }
-
-        chest.withdraw(self.mcData.itemsByName[item].id,null,itemsToFetch,function () {
+        chest.withdraw(item_id, null, itemsToFetch,function () {
           self.fetchItem(chest, items)
         })
       }
+    }
+
+    // gets the first itemid which matches name
+    getItemId(name, chest) {
+      const items = chest.items()
+      var id
+
+      items.forEach((i) => {
+        if(i.name.includes(name)) {
+          id = i.type
+        }
+      })
+
+      return id
     }
     
     isFinished() {

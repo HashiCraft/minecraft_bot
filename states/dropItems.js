@@ -9,13 +9,13 @@ const BehaviorDropInventoryAtChest = require('../behaviors/dropInventoryAtChest'
 
 // sub state to drop off any items when finishing mining
 function createDropItemsState(bot, targets) {
-  const myTarget = {
+  const myTargets = {
     position: targets.dropOffChestLocation
   }
 
   const idle = new BehaviorIdle();
   const idleEnd = new BehaviorIdle();
-  const moveChest = new BehaviorMoveTo(bot, myTarget)
+  const moveChest = new BehaviorMoveTo(bot, myTargets)
   const dropItems = new BehaviorDropInventoryAtChest(bot, targets)
   
   const transitions = [
@@ -24,7 +24,11 @@ function createDropItemsState(bot, targets) {
         child: moveChest,
         name: "back to the chest",
         shouldTransition: () => true,
-        onTransition: () => console.log("dropState.move_to_chest"),
+        onTransition: () => {
+          myTargets.position = targets.dropOffChestLocation
+          console.log("dropState.move_to_chest", myTargets.position)
+        }
+
     }),
     
     new StateTransition({

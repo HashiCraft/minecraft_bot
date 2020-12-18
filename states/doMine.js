@@ -73,7 +73,7 @@ function createDoMineState(bot, targets) {
         child: dropState,
         name: "done mining", 
         shouldTransition: () => targets.colDone,
-        onTransition: () => console.log("mineState.drop_items"),
+        onTransition: () => console.log("mineItems.drop_items"),
     }),
 
     new StateTransition({
@@ -90,14 +90,14 @@ function createDoMineState(bot, targets) {
         parent: idleEquipped,
         child: fightMobs,
         shouldTransition: () => bot.inDanger(),
-        onTransition: () => console.log("mineItems.equip_pickaxe"),
+        onTransition: () => console.log("mineItems.fight_mobs"),
     }),
     
     new StateTransition({
         parent: fightMobs,
         child: idle,
         shouldTransition: () => fightMobs.isFinished(),
-        onTransition: () => console.log("mineItems.equip_pickaxe"),
+        onTransition: () => console.log("mineItems.idle"),
     }),
     // end fight
     
@@ -114,7 +114,7 @@ function createDoMineState(bot, targets) {
         parent: eatMelon,
         child: idle,
         shouldTransition: () => eatMelon.isFinished(),
-        onTransition: () => console.log("mineItems.equip_pickaxe"),
+        onTransition: () => console.log("mineItems.idle"),
     }),
     // end eat
 
@@ -133,6 +133,7 @@ function createDoMineState(bot, targets) {
         child: moveMineState,
         name: "mine nearby if we have a nearby item",
         shouldTransition: () => bot.hasTools(),
+        onTransition: () => console.log("mineItems.move_to_position"),
     }),
     
     new StateTransition({
@@ -156,7 +157,7 @@ function createDoMineState(bot, targets) {
         child: idle,
         name: "all done",
         shouldTransition: () => dropTorch.isFinished(),
-        onTransition: () => console.log("mineItems.equip_pickaxe"),
+        onTransition: () => console.log("mineItems.idle"),
     }),
     // end mine
   ]

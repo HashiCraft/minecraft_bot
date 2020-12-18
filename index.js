@@ -1,45 +1,202 @@
-const mineflayer = require('mineflayer')
-const pathfinder = require('mineflayer-pathfinder').pathfinder
-const pvp = require('mineflayer-pvp').plugin
-const Movements = require('mineflayer-pathfinder').Movements
-const mineflayerViewer = require('prismarine-viewer').mineflayer
-
-const Vec3 = require('vec3').Vec3
-
-const { GoalNear, GoalFollow, GoalBlock } = require('mineflayer-pathfinder').goals
-
 const Miner = require('./miner')
 
-const bot = mineflayer.createBot({
+var tty = require("tty");
+const nodeFlags = require('node-flag')
+
+const express = require('express')
+const http = require('http')
+var bodyParser = require('body-parser')
+const uuidv4 = require("uuid/v4")
+
+// Settings
+const bindAddress = process.env.BIND_ADDR || '0.0.0.0'
+const bindPort = process.env.BIND_PORT || 3000
+
+const rootSettings = {
   host: process.env.HOST, // optional
   port: process.env.PORT || 25565,       // optional
   username: process.env.USER, // email and password are required only for
   password: process.env.PASSWORD,          // online-mode=true servers
-  version: false                 // false corresponds to auto version detection (that's the default), put for example "1.8.8" if you need a specific version
-})
-
-bot.loadPlugin(pathfinder)
-bot.loadPlugin(pvp)
-
-bot.once('spawn', () => {
-
-  const mcData = require('minecraft-data')(bot.version)
-  const defaultMove = new Movements(bot, mcData)
-  defaultMove.canDig = false;
-  
-  mineflayerViewer(bot, { port: 3007, firstPerson: true })
-
-  const minerOptions = {
-    dropOffChestLocation: new Vec3(-464, 6, 40),
-    equipmentChestLocation: new Vec3(-444, 5, 47),
-    mineStart: new Vec3(-476, 8, 48),
-    mineEnd: new Vec3(-500, 8, 100)
-  }
-
-  const m = new Miner(bot)
-  m.startBot(minerOptions)
+  version: false,                 // false corresponds to auto version detection (that's the default), put for example "1.8.8" if you need a specific version
+  //viewer_port: 3007
 }
 
-// Log errors and kick reasons:
-bot.on('kicked', (reason, loggedIn) => console.log(reason, loggedIn))
-bot.on('error', err => console.log(err))
+const app = express()
+const server = http.createServer(app)
+
+const miner = new Miner()
+
+// graceful shutdown
+process.on('SIGINT', function() {
+  console.log("Killing the bot");
+  var t = setTimeout(() => process.exit(), 5000)
+
+  miner.killBot(() => {
+    clearTimeout(t)
+    process.exit();
+  })
+
+  server.close(() => {
+    console.log('HTTP server closed')
+  })
+});
+
+
+app.use(bodyParser.json())
+
+app.get('/health', (req, res) => {
+  res.send('OK')
+})
+
+app.post('/bot', (req, res) => {
+  const jb = req.body
+  // create the settings
+  var s = rootSettings
+  
+  if(jb) {
+    s = {
+      host: jb.host || rootSettings.host, 
+      port: jb.port || rootSettings.port,
+      username: jb.username || rootSettings.username,
+      password: jb.password || rootSettings.password,
+      version: rootSettings.version,
+      viewer_port: rootSettings.viewer_port
+    }
+  }
+
+  miner.createBot(s)
+
+  res.send(
+    {
+      id: uuidv4(),
+      message: 'bot started'
+    }
+  )
+})
+
+app.delete('/bot/:id', (req, res) => {
+  miner.killBot()
+  res.send(
+    {
+    id: req.params.id,
+    message: 'bot killed'
+    }
+  )
+})
+
+app.post('/bot/:id/configure',(req, res) => {
+  const d = req.body
+  console.log(d)
+
+  // process the mineStart
+  const ms = d.mine_start
+  if(!ms) {
+    res.status(400)
+    res.send({message: 'Please specify the mine_start parameter as a comma separated string x,y,z'})
+    return
+  }
+
+  const msParts = ms.split(',')
+  if(!msParts || msParts.length !== 3) {
+    res.status(400)
+    res.send({message: 'Please specify the mine_start parameter as a comma separated string x,y,z'})
+    return
+  }
+  
+  // process the mineEnd
+  const me = d.mine_end
+  if(!me) {
+    res.status(400)
+    res.send({message: 'Please specify the mine_end parameter as a comma separated string x,y,z'})
+    return
+  }
+
+  const meParts = me.split(',')
+  if(!meParts || meParts.length !== 3) {
+    res.status(400)
+    res.send({message: 'Please specify the mine_end parameter as a comma separated string x,y,z'})
+    return
+  }
+  
+  // process the tool_chest
+  const tc = d.tool_chest
+  if(!tc) {
+    res.status(400)
+    res.send({message: 'Please specify the tool_chest parameter as a comma separated string x,y,z'})
+    return
+  }
+
+  const tcParts = tc.split(',')
+  if(!tcParts || tcParts.length !== 3) {
+    res.status(400)
+    res.send({message: 'Please specify the tool_chest parameter as a comma separated string x,y,z'})
+    return
+  }
+  
+  // process the drop_chest
+  const dc = d.drop_chest
+  if(!dc) {
+    res.status(400)
+    res.send({message: 'Please specify the drop_chest parameter as a comma separated string x,y,z'})
+    return
+  }
+
+  const dcParts = dc.split(',')
+  if(!dcParts || dcParts.length !== 3) {
+    res.status(400)
+    res.send({message: 'Please specify the drop_chest parameter as a comma separated string x,y,z'})
+    return
+  }
+
+  miner.setMineStart(msParts[0], msParts[1], msParts[2])
+  miner.setMineEnd(meParts[0], me[1], me[2])
+  miner.setDropOffChestLocation(dcParts[0], dcParts[1], dcParts[2])
+  miner.setEquipmentChestLocation(tcParts[0], tcParts[1], tcParts[2])
+
+  res.send(
+    {
+    id: req.params.id,
+    message: 'bot configured'
+    }
+  )
+})
+
+app.get('/bot/:id/start',(req, res) => {
+  miner.startMining()
+  res.send(
+    {
+    id: req.params.id,
+    message: 'started mining'
+    }
+  )
+})
+
+app.get('/bot/:id/stop',(req, res) => {
+  miner.stopMining()
+  res.send(
+    {
+    id: req.params.id,
+    message: 'started mining'
+    }
+  )
+})
+
+app.get('/bot/:id/inventory',(req, res) => {
+  const inv = miner.getInventory()
+
+  res.send(
+    {
+    id: req.params.id,
+    message: inv
+    }
+  )
+})
+
+
+// should we autostart the bot?
+if(nodeFlags.isset('autostart')) {
+  miner.createBot(rootSettings)
+}
+
+console.log('Starting HTTP server on:', bindAddress, bindPort)
+server.listen(bindPort, bindAddress)
