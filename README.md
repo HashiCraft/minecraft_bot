@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # HashiCraft Minecraft Bot
 
 ## Running the bot
@@ -60,3 +61,7 @@ The `inventory` command asks the bot to tell you what it has in it's inventory
 
 All good robotic helpers need to eat, this one is partial to `melon_slices`, if you equip the bot with `melon_slices`, it will automatically
 eat when it gets hungry.
+=======
+# minecraft_bot
+Bot which can do various useful stuff in minecraft
+>>>>>>> 05eade03e87839a06da60df8799a12b36694a219
