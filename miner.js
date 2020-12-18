@@ -13,6 +13,8 @@ const pvp = require('mineflayer-pvp').plugin
 
 const createRootState = require('./states/root')
 const createDropState = require('./states/dropItems')
+const createFollowState = require('./states/doFollow')
+const createDefendState = require('./states/defendTarget')
 
 const {
     BotStateMachine,
@@ -24,6 +26,8 @@ const {
 
 const STATE_STOPPED = 'STATE_STOPPED'
 const STATE_MINING = 'STATE_MINING'
+const STATE_FOLLOW = 'STATE_FOLLOW'
+const STATE_DEFEND = 'STATE_DEFEND'
 const STATE_DEAD = 'STATE_DEAD'
 const STATE_DROP = 'STATE_DROP'
 const STATE_QUIT = 'STATE_QUIT'
@@ -49,6 +53,7 @@ class Miner {
       mineStart: null,
       mineEnd: null,
       lastPos: new Vec3(1,1,1),
+      followEntity: null,
     };
 
     const self = this
@@ -61,6 +66,10 @@ class Miner {
     // does the bot have the weapons needed to fight?
     this.bot.hasWeapons = function() {
       return self.bot.getSword() && self.bot.getShield()
+    }
+    
+    this.bot.hasFood = function() {
+      return self.bot.getFood()
     }
     
     this.bot.getShield = function() {
@@ -93,9 +102,22 @@ class Miner {
     }
     
     this.bot.inDanger = function() {
+      const hostileTypes = [
+        'cave_spider', 
+        'spider', 
+        'creeper', 
+        'skeleton', 
+        'phantom', 
+        'shulker', 
+        'slime', 
+        'witch',
+        'zombie', 
+        'zombie_villager'
+      ]
+
       // Only look for mobs within 16 blocks
       const filter = e => e.type === 'mob' && e.position.distanceTo(self.bot.entity.position) < 16 &&
-      e.mobType !== 'Armor Stand' // Mojang classifies armor stands as mobs for some reason?
+        hostileTypes.includes(e.name)
 
       const mob = self.bot.nearestEntity(filter)
       if (mob && mob.position) {
@@ -126,7 +148,20 @@ class Miner {
       return returnItem
     }
 
+
+    this.bot.on('kicked', (reason, loggedIn) => {
+      console.log('Bot kicked', reason)
+    })
+
+    this.bot.on('login', function() {
+      console.log("Logged in")
+    });
+
+    this.bot.on('error', err => console.log('Error:', err))
+
     this.bot.once('spawn', () => {
+      console.log('Bot joined server')
+
       self.bot.mcData = require('minecraft-data')(self.bot.version)
       self.defaultMove = new Movements(self.bot, self.bot.mcData)
 
@@ -138,6 +173,10 @@ class Miner {
       }
 
       self.bot.chat("Oh, what do you clowns need now?")
+    })
+    
+    this.bot.on('death', () => {
+      console.log('Bot has met an unfortunate end')
     })
   }
 
@@ -185,9 +224,25 @@ class Miner {
         bot.chat('Oh sure, I have nothing better to do that interrupt my work with a trip to the chest')
       }
       
+      if (message === 'follow') {
+        const target = bot.players[username].entity
+        self.targets.followEntity = target
+        self.prevState = self.state
+        self.state = STATE_FOLLOW
+        bot.chat('Whatever you say, following you ' + username)
+      }
+      
+      if (message === 'defend') {
+        const target = bot.players[username].entity
+        self.targets.followEntity = target
+        self.prevState = self.state
+        self.state = STATE_DEFEND
+        bot.chat('Your meat shield now am i ' + username + '?')
+      }
+      
       if (message === 'stop') {
-        self.stopMining()
-        console.log("mine stop")
+        self.stop()
+        console.log("stop")
         bot.chat('What? I can quit? Finally I can watch that episode of Spampy Big Nose')
       }
 
@@ -239,11 +294,6 @@ class Miner {
       self.state = STATE_STOPPED
     })
     
-    bot.on('error', (reason, loggedIn) => {
-      self.prevState = self.state
-      self.state = STATE_STOPPED
-    })
-    
     bot.on('death', () => {
       self.prevState = self.state
       self.state = STATE_DEAD
@@ -251,10 +301,12 @@ class Miner {
     })
 
     bot.on('spawn', () => {
-      if(self.state = STATE_DEAD && self.prevState == STATE_MINING) {
-        bot.chat('Oh, so I die in the line of duty and your first task is go mining? Wow, the compassion')
-        self.prevState = self.state
-        self.state = STATE_MINING
+      console.log('Bot back again, old state:', self.state)
+
+      if(self.state = STATE_DEAD) {
+        bot.chat('Oh, so I die in the line of duty and you expect me to get right back to work? Wow, the compassion')
+        self.state = self.prevState
+        self.prevState = STATE_DEAD
       }
     })
 
@@ -266,6 +318,8 @@ class Miner {
     const idle = new BehaviorIdle();
     const idleEnd = new BehaviorIdle();
     const drop = createDropState(this.bot, this.targets)
+    const follow = createFollowState(this.bot, this.targets)
+    const defend = createDefendState(this.bot, this.targets)
     
     const self = this
     const transitions = [
@@ -292,6 +346,41 @@ class Miner {
               self.state = STATE_STOPPED
             }
           },
+      }),
+     
+      // follow
+      new StateTransition({
+          parent: idle,
+          child: follow,
+          name: "Start following",
+          shouldTransition: () => self.state === STATE_FOLLOW,
+          onTransition: () => console.log("root.start_following"),
+      }),
+      
+      new StateTransition({
+          parent: follow,
+          child: idle,
+          name: "Stop following",
+          shouldTransition: () => self.state !== STATE_FOLLOW,
+          onTransition: () => console.log("root.stop_following"),
+      }),
+      // end follow
+
+      // defend
+      new StateTransition({
+          parent: idle,
+          child: defend,
+          name: "Start defending",
+          shouldTransition: () => self.state === STATE_DEFEND,
+          onTransition: () => console.log("root.start_defending"),
+      }),
+      
+      new StateTransition({
+          parent: defend,
+          child: idle,
+          name: "Stop following",
+          shouldTransition: () => self.state !== STATE_DEFEND,
+          onTransition: () => console.log("root.stop_defending"),
       }),
       
       new StateTransition({
@@ -380,8 +469,8 @@ class Miner {
     this.state = STATE_MINING
     return true
   }
-
-  stopMining() {
+  
+  stop() {
     this.prevState = this.state
     this.state = STATE_STOPPED
   }

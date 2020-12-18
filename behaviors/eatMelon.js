@@ -24,7 +24,7 @@ class BehaviorEatMelon {
       this.active = true
       this.cancelled = false
       
-      const melon = this.bot.inventory.findInventoryItem(this.bot.mcData.itemsByName["melon_slice"].id, null);
+      const melon = this.bot.getFood()
 
       if(!melon) {
         this.bot.chat("I'm hungy but there is no melon :(")
@@ -34,9 +34,9 @@ class BehaviorEatMelon {
         return
       }
 
-      const self = this
-      self.eatMelon(melon)
+      this.eatMelon(melon)
 
+      const self = this
       this.timeout = setTimeout(() => {
         console.log('Timeout twisting my melon man')
         self.active = false
@@ -45,13 +45,13 @@ class BehaviorEatMelon {
     
     onStateExited() {
       this.cancelled = true
-      this.active = false
     }
 
     eatMelon(melon) {
       const self = this
       this.bot.equip(melon, 'hand', (error) => {
         if (error) {
+          console.log('error equiping melon', error)
           self.done()
           return
         }

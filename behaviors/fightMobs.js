@@ -21,25 +21,24 @@ class BehaviorFightMobs {
         
         const self = this
         this.bot.on('stoppedAttacking', () => {
-          console.log('Stopped attacking')
-          if (this.cancelled)
+          if (self.cancelled)
             return
 
-          // check for more mobs
-          const mob = this.getMobToFight()
-          if (mob) {
-            this.equipWeaponsAndFight(mob)
-          } else {
-            this.active = false
-          }
+          if(!self.active)
+            return
+
+          console.log('Stopped attacking')
+          self.checkMobAndFight()
         })
         
         this.bot.on('startedAttacking', () => {
-          console.log('Started attacking')
-        })
+          if (self.cancelled)
+            return
 
-        this.bot.on('death', () => {
-          self.onStateExited()
+          if(!self.active)
+            return
+
+          console.log('Started attacking')
         })
       
         this.mcData = this.bot.mcData
@@ -47,13 +46,21 @@ class BehaviorFightMobs {
     
     onStateEntered() {
       this.cancelled = false
+      this.active = true
 
+      this.checkMobAndFight()
+    }
+
+    onStateExited() {
+      console.log('exit fight behavior') 
+      this.bot.pvp.stop()
+      this.cancelled = true
+    }
+
+    checkMobAndFight() {
       const mob = this.getMobToFight()
       if (mob) {
-        this.active = true
-        
-        this.bot.chat('You want to fight, then fight me')
-        this.bot.chat('It\'s cloberin time, (pop down to the mine and clean up my mess please)')
+        //this.bot.chat('You want to fight, then fight me')
         console.log('Fighting mob', mob.name)
       
         const sword = this.bot.getSword()
@@ -63,22 +70,20 @@ class BehaviorFightMobs {
           this.bot.chat('You want me to fight a ' + mob.name +'  with no weapons, I can see this going well')
           console.log('Weapon inventory sword: ', sword, 'shield:', shield)
 
+          // Fight bare handed
           this.bot.pvp.attack(mob)
           return
         }
 
-        // Start attacking
+        // Start attacking with weapons
         this.equipWeaponsAndFight(mob)
+        return
       }
-    }
-    
-    onStateExited() {
-      console.log('exit fight behavior') 
-      this.bot.pvp.stop()
-      this.cancelled = true
+
+      // nothing to fight, exit
       this.active = false
     }
-
+    
     getMobToFight() {
       if(this.cancelled)
         return

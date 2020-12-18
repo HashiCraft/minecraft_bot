@@ -17,7 +17,7 @@ const rootSettings = {
   port: process.env.PORT || 25565,       // optional
   username: process.env.USER, // email and password are required only for
   password: process.env.PASSWORD,          // online-mode=true servers
-  version: false,                 // false corresponds to auto version detection (that's the default), put for example "1.8.8" if you need a specific version
+  version: false, 
   //viewer_port: 3007
 }
 
@@ -194,7 +194,8 @@ app.get('/bot/:id/inventory',(req, res) => {
 
 
 // should we autostart the bot?
-if(nodeFlags.isset('autostart')) {
+if(nodeFlags.isset('start')) {
+  console.log('Starting bot', rootSettings)
   miner.createBot(rootSettings)
 }
 
