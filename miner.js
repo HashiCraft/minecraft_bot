@@ -210,13 +210,12 @@ class Miner {
     const bot = this.bot
     const self = this
     bot.on('whisper', function(username, message) {
-      if (message === 'start mining') {
+      if (message === 'mine start') {
         if (!self.startMining()) {
           bot.chat('Before I can start mining you need to tell me the area, where I can get my tools and where I should drop the diamonds')
           return
         }
 
-        console.log("mine start")
         bot.chat('Mine, mine, mine, you never ask me to play, just mine')
       }
       
