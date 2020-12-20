@@ -13,7 +13,6 @@
     "mineflayer-pathfinder": "https://github.com/nicholasjackson/mineflayer-pathfinder.git",
     "mineflayer-pvp": "^1.0.2",
     "mineflayer-statemachine": "^1.5.1",
-    "node-flag": "^1.5.1",
-    "prismarine-viewer": "^1.8.0"
+    "node-flag": "^1.5.1"
   }
 }

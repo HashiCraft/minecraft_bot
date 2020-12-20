@@ -15,8 +15,8 @@ const bindPort = process.env.BIND_PORT || 3000
 const rootSettings = {
   host: process.env.HOST, // optional
   port: process.env.PORT || 25565,       // optional
-  username: process.env.USER, // email and password are required only for
-  password: process.env.PASSWORD,          // online-mode=true servers
+  username: process.env.BOT_USERNAME, // email and password are required only for
+  password: process.env.BOT_PASSWORD,          // online-mode=true servers
   version: false, 
   //viewer_port: 3007
 }
@@ -52,6 +52,7 @@ app.post('/bot', (req, res) => {
   const jb = req.body
   // create the settings
   var s = rootSettings
+  console.log(jb)
   
   if(jb) {
     s = {

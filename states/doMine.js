@@ -64,7 +64,7 @@ function createDoMineState(bot, targets) {
         parent: equipPickAxe,
         child: idleEquipped,
         onTransition: () => console.log("mineItems.waiting"),
-        shouldTransition: () => equipPickAxe.wasEquipped
+        shouldTransition: () => bot.equippedItem() && bot.equippedItem().includes("pickaxe")
     }),
     
     // are we done should we drop off th items

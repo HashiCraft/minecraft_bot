@@ -7,7 +7,7 @@ const Vec3 = require('vec3').Vec3
 
 const Movements = require('mineflayer-pathfinder').Movements
 const mineflayer = require('mineflayer')
-const mineflayerViewer = require('prismarine-viewer').mineflayer
+//const mineflayerViewer = require('prismarine-viewer').mineflayer
 const pathfinder = require('mineflayer-pathfinder').pathfinder
 const pvp = require('mineflayer-pvp').plugin
 
@@ -148,6 +148,11 @@ class Miner {
       return returnItem
     }
 
+    this.bot.equippedItem = function() {
+      const slot = self.bot.inventory.slots[self.bot.getEquipmentDestSlot('hand')]
+      if(slot)
+        return slot.name
+    }
 
     this.bot.on('kicked', (reason, loggedIn) => {
       console.log('Bot kicked', reason)
@@ -169,7 +174,7 @@ class Miner {
       self.setupRootState()
 
       if(settings.viewer_port) {
-        mineflayerViewer(self.bot, { port: settings.viewer_port, firstPerson: true })
+        //mineflayerViewer(self.bot, { port: settings.viewer_port, firstPerson: true })
       }
 
       self.bot.chat("Oh, what do you clowns need now?")
