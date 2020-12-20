@@ -10,9 +10,10 @@
   "license": "ISC",
   "dependencies": {
     "mineflayer": "^2.37.0",
-    "mineflayer-pathfinder": "https://github.com/nicholasjackson/mineflayer-pathfinder.git",
+    "mineflayer-pathfinder": "git+https://github.com/nicholasjackson/mineflayer-pathfinder.git",
     "mineflayer-pvp": "^1.0.2",
     "mineflayer-statemachine": "^1.5.1",
-    "node-flag": "^1.5.1"
+    "node-flag": "^1.5.1",
+    "uuid": "^8.3.2"
   }
 }

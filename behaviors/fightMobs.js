@@ -18,6 +18,7 @@ class BehaviorFightMobs {
         this.cancelled = false
         this.bot = bot;
         this.targets = targets;
+        this.attacking = false
         
         const self = this
         this.bot.on('stoppedAttacking', () => {
@@ -25,6 +26,9 @@ class BehaviorFightMobs {
             return
 
           if(!self.active)
+            return
+
+          if(!this.waitingToAttack)
             return
 
           console.log('Stopped attacking')
@@ -38,6 +42,7 @@ class BehaviorFightMobs {
           if(!self.active)
             return
 
+          this.waitingToAttack = false
           console.log('Started attacking')
         })
       
@@ -60,6 +65,8 @@ class BehaviorFightMobs {
     checkMobAndFight() {
       const mob = this.getMobToFight()
       if (mob) {
+        this.waitingToAttack = true
+
         //this.bot.chat('You want to fight, then fight me')
         console.log('Fighting mob', mob.name)
       
@@ -76,12 +83,34 @@ class BehaviorFightMobs {
         }
 
         // Start attacking with weapons
-        this.equipWeaponsAndFight(mob)
+        this.equipWeaponsAndFight(mob, sword, shield)
         return
       }
 
       // nothing to fight, exit
       this.active = false
+    }
+    
+    equipWeaponsAndFight(mob, sword, shield) {
+      const self = this
+
+      this.bot.unequip('hand', () => {
+        self.bot.equip(sword, 'hand', (error) => {
+          if(error) {
+            console.log('Unable to equip sword')
+          }
+      
+          self.bot.unequip('off-hand', () => {
+            self.bot.equip(shield, 'off-hand', (error) => {
+              if(error) {
+                console.log('Unable to equip shield')
+              }
+
+              this.bot.pvp.attack(mob)
+            })
+          })
+        })
+      })
     }
     
     getMobToFight() {
@@ -103,30 +132,6 @@ class BehaviorFightMobs {
 
         return mob
       }
-    }
-
-    equipWeaponsAndFight(mob) {
-      const sword = this.bot.getSword()
-      const shield = this.bot.getShield()
-      const self = this
-
-      this.bot.unequip('hand', () => {
-        self.bot.equip(sword, 'hand', (error) => {
-          if(error) {
-            console.log('Unable to equip sword')
-          }
-      
-          self.bot.unequip('off-hand', () => {
-            self.bot.equip(shield, 'off-hand', (error) => {
-              if(error) {
-                console.log('Unable to equip shield')
-              }
-
-              this.bot.pvp.attack(mob)
-            })
-          })
-        })
-      })
     }
 
     isFinished() {

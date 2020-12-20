@@ -29,7 +29,6 @@ function createDoMineState(bot, targets) {
   const equipPickAxe = new BehaviorEquipItem(bot, targets)
   const eatMelon = new BehaviorEatMelon(bot, targets)
   const fightMobs = new BehaviorFightMobs(bot, targets)
-  const dropState = createDropItemsState(bot, targets)
  
   //const self = this
 
@@ -37,18 +36,10 @@ function createDoMineState(bot, targets) {
     // check our pick axe is still ok, if not fetch a new one
     new StateTransition({
         parent: idle,
-        child: getPickAxeState,
+        child: idleEnd,
         shouldTransition: () => !bot.hasTools(),
-        onTransition: () => console.log("mineItems.fetch_pickaxe"),
+        onTransition: () => console.log("mineItems.no_tools"),
     }),
-
-    new StateTransition({
-        parent: getPickAxeState,
-        child: idle,
-        shouldTransition: () => getPickAxeState.isFinished(),
-        onTransition: () => console.log("mineItems.equip_pickaxe"),
-    }),
-    // end pickaxe
     
     new StateTransition({
         parent: idle,
@@ -66,24 +57,6 @@ function createDoMineState(bot, targets) {
         onTransition: () => console.log("mineItems.waiting"),
         shouldTransition: () => bot.equippedItem() && bot.equippedItem().includes("pickaxe")
     }),
-    
-    // are we done should we drop off th items
-    new StateTransition({
-        parent: idleEquipped,
-        child: dropState,
-        name: "done mining", 
-        shouldTransition: () => targets.colDone,
-        onTransition: () => console.log("mineItems.drop_items"),
-    }),
-
-    new StateTransition({
-        parent: dropState,
-        child: idleEnd,
-        name: "nothing left to mine done",
-        shouldTransition: () => dropState.isFinished(),
-        onTransition: () => console.log("mineItems.column_done"),
-    }),
-    // end done
     
     // fight mobs
     new StateTransition({
@@ -118,7 +91,6 @@ function createDoMineState(bot, targets) {
     }),
     // end eat
 
-
     // mine - default
     new StateTransition({
         parent: idleEquipped,
@@ -127,12 +99,20 @@ function createDoMineState(bot, targets) {
         shouldTransition: () => true,
         onTransition: () => console.log("mineItems.set_target"),
     }),
+
+    new StateTransition({
+        parent: setMiningTarget,
+        child: idleEnd,
+        name: "nothing to do",
+        shouldTransition: () => targets.colDone || targets.allDone,
+        onTransition: () => console.log("mineItems.no_target"),
+    }),
    
     new StateTransition({
         parent: setMiningTarget,
         child: moveMineState,
         name: "mine nearby if we have a nearby item",
-        shouldTransition: () => bot.hasTools(),
+        shouldTransition: () => true,
         onTransition: () => console.log("mineItems.move_to_position"),
     }),
     

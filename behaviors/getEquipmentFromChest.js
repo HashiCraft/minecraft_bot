@@ -29,18 +29,18 @@ class BehaviorGetEquipmentFromChest {
         ]
 
         this.mcData = this.bot.mcData
-        this.itemsMissing = false
+        this.targets.itemsMissing = false
     }
     
     onStateEntered() {
       this.active = true
       this.cancelled = false
-      this.itemsMissing = false
+      this.targets.itemsMissing = false
 
       // find a chest
       const chestToOpen = this.bot.findBlock({
         matching: ['chest', 'ender_chest', 'trapped_chest'].map(
-          name => this.mcData.blocksByName[name].id), maxDistance: 10
+          name => this.mcData.blocksByName[name].id), maxDistance: 4
       })
 
       if(!chestToOpen) {
@@ -51,16 +51,20 @@ class BehaviorGetEquipmentFromChest {
 
       const chest = this.bot.openChest(chestToOpen)
       const self = this
-      var itemList = [...this.equipmentList]
+      this.bot.lookAt(chestToOpen.position, true, () => {
+        var itemList = [...this.equipmentList]
 
-      chest.on('open', function() {
-        self.fetchItem(chest, itemList)
+        //console.log("opening chest", chest, chestToOpen)
+        chest.on('open', function() {
+          //console.log("open chest")
+          self.fetchItem(chest, itemList)
+        })
       })
     }
 
     onStateExited() {
+      console.log("get equipment cancelled")
       this.cancelled = true
-      this.active = false
     }
 
     fetchItem(chest, items) {
@@ -94,7 +98,7 @@ class BehaviorGetEquipmentFromChest {
 
       if (!item_id && item.required) {
         this.bot.chat("How I am supposed to get a " + item.name + " when there is not one in the chest?")
-        console.log("No " + item_id + " " + item.name + " in chest")
+        console.log("No " + item.name + " in chest")
 
         this.active = false
         this.targets.itemsMissing = true

@@ -26,7 +26,10 @@ class BehaviorSetMiningTarget {
     //this.mineStart = new Vec3(-441, 5, 40)
     //this.mineEnd = new Vec3(-500, 4, 40)
 
-    onStateEntered() {
+    onStateEntered() { 
+      // if no last position set to mine start 
+      if(!this.targets.lastPos)
+        this.targets.lastPos = new Vec3(this.targets.mineStart.x,this.targets.mineStart.y,this.targets.mineStart.z)
 
       // figure out which direction a column runs
       // this is the bigger distance between the xMax and zMax
@@ -44,11 +47,11 @@ class BehaviorSetMiningTarget {
       const xDistCurAbs = (xDistCur < 0) ? xDistCur*-1 : xDistCur // 59
       const zDistCurAbs = (zDistCur < 0) ? zDistCur*-1 : zDistCur // 2
    
-      //console.log("last:", this.targets.lastPos)
-      //console.log("mineStart:", this.targets.mineStart)
-      //console.log("mineEnd:", this.targets.mineEnd)
-      //console.log("xDistMax:", xDistMax, "zDistMax", zDistMax, "xDistCur", xDistCur, "zDistCur", zDistCur)
-      //console.log("xDistMaxAbs:", xDistMaxAbs, "zDistMaxAbs", zDistMaxAbs, "xDistCurAbs", xDistCurAbs, "zDistCurAbs", zDistCurAbs)
+      console.log("last:", this.targets.lastPos)
+      console.log("mineStart:", this.targets.mineStart)
+      console.log("mineEnd:", this.targets.mineEnd)
+      console.log("xDistMax:", xDistMax, "zDistMax", zDistMax, "xDistCur", xDistCur, "zDistCur", zDistCur)
+      console.log("xDistMaxAbs:", xDistMaxAbs, "zDistMaxAbs", zDistMaxAbs, "xDistCurAbs", xDistCurAbs, "zDistCurAbs", zDistCurAbs)
       
       if (xDistCurAbs <= 0 && zDistCurAbs <= 0) {
         console.log("Cant move any further, all done")
@@ -57,6 +60,7 @@ class BehaviorSetMiningTarget {
         this.targets.colDone = true
         this.targets.allDone = true
         this.targets.position = null
+        this.targets.lastPos = null
         return
       }
 
@@ -95,7 +99,7 @@ class BehaviorSetMiningTarget {
       }
 
       this.targets.position = this.targets.lastPos
-      //console.log("Set new target", this.targets.lastPos, "col:", this.targets.currentCol, "incr", incDir, "xMax", xDistMaxAbs, "zMax", zDistMaxAbs)
+      console.log("Set new target", this.targets.lastPos, "col:", this.targets.currentCol, "incr", incDir, "xMax", xDistMaxAbs, "zMax", zDistMaxAbs)
     }
 }
 

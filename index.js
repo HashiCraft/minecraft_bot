@@ -6,7 +6,7 @@ const nodeFlags = require('node-flag')
 const express = require('express')
 const http = require('http')
 var bodyParser = require('body-parser')
-const uuidv4 = require("uuid/v4")
+const {v4: uuidv4} = require("uuid")
 
 // Settings
 const bindAddress = process.env.BIND_ADDR || '0.0.0.0'
@@ -150,7 +150,7 @@ app.post('/bot/:id/configure',(req, res) => {
   }
 
   miner.setMineStart(msParts[0], msParts[1], msParts[2])
-  miner.setMineEnd(meParts[0], me[1], me[2])
+  miner.setMineEnd(meParts[0], meParts[1], meParts[2])
   miner.setDropOffChestLocation(dcParts[0], dcParts[1], dcParts[2])
   miner.setEquipmentChestLocation(tcParts[0], tcParts[1], tcParts[2])
 
@@ -173,11 +173,11 @@ app.get('/bot/:id/start',(req, res) => {
 })
 
 app.get('/bot/:id/stop',(req, res) => {
-  miner.stopMining()
+  miner.stop()
   res.send(
     {
     id: req.params.id,
-    message: 'started mining'
+    message: 'stopped doing what I was doing'
     }
   )
 })

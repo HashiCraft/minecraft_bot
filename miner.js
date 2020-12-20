@@ -12,9 +12,9 @@ const pathfinder = require('mineflayer-pathfinder').pathfinder
 const pvp = require('mineflayer-pvp').plugin
 
 const createRootState = require('./states/root')
-const createDropState = require('./states/dropItems')
 const createFollowState = require('./states/doFollow')
 const createDefendState = require('./states/defendTarget')
+const createDropState = require('./states/dropItems')
 
 const {
     BotStateMachine,
@@ -321,9 +321,9 @@ class Miner {
     const miningRoot = createRootState(this.bot, this.targets)
     const idle = new BehaviorIdle();
     const idleEnd = new BehaviorIdle();
-    const drop = createDropState(this.bot, this.targets)
     const follow = createFollowState(this.bot, this.targets)
     const defend = createDefendState(this.bot, this.targets)
+    const drop = createDropState(this.bot, this.targets)
     
     const self = this
     const transitions = [
@@ -438,7 +438,7 @@ class Miner {
 
   setMineStart(x,y,z) {
     this.targets.mineStart = new Vec3(parseInt(x), parseInt(y), parseInt(z))
-    this.targets.lastPos = new Vec3(this.targets.mineStart.x, this.targets.mineStart.y, this.targets.mineStart.z)
+    this.targets.lastPos = null
     this.targets.allDone = false
     this.targets.colDone = false
     this.targets.currentCol = 0
