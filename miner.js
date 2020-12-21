@@ -21,12 +21,14 @@ const {
     BehaviorIdle,
     StateTransition,
     NestedStateMachine,
+    BehaviorMoveTo,
 } = require('mineflayer-statemachine');
 
 
 const STATE_STOPPED = 'STATE_STOPPED'
 const STATE_MINING = 'STATE_MINING'
 const STATE_FOLLOW = 'STATE_FOLLOW'
+const STATE_GOTO = 'STATE_GOTO'
 const STATE_DEFEND = 'STATE_DEFEND'
 const STATE_DEAD = 'STATE_DEAD'
 const STATE_DROP = 'STATE_DROP'
@@ -210,6 +212,9 @@ class Miner {
     const bot = this.bot
     const self = this
     bot.on('whisper', function(username, message) {
+      
+      const messageParts = message.split(' ')
+      
       if (message === 'mine start') {
         if (!self.startMining()) {
           bot.chat('Before I can start mining you need to tell me the area, where I can get my tools and where I should drop the diamonds')
@@ -223,9 +228,26 @@ class Miner {
         bot.chat(self.getInventory())
       }
       
+      if (message === 'position') {
+        bot.chat('Where am I? You are not my boss. Well if you must know, ' + self.bot.entity.position)
+      }
+      
       if (message === 'drop') {
         self.dropItems()
         bot.chat('Oh sure, I have nothing better to do that interrupt my work with a trip to the chest')
+      }
+      
+      if (messageParts.length === 2 && messageParts[0] === "goto") {
+        // get the start area
+        const sa = messageParts[1].split(',')
+
+        if(sa.length !== 3) {
+          bot.chat('Where would you like me to go to? /tell bot goto <x,y,z>')
+          return
+        }
+      
+        bot.chat('Stay still, follow me, defend me, now go to ' + messageParts[1])
+        self.goto(sa[0], sa[1], sa[2])
       }
       
       if (message === 'follow') {
@@ -250,7 +272,6 @@ class Miner {
         bot.chat('What? I can quit? Finally I can watch that episode of Spampy Big Nose')
       }
 
-      const messageParts = message.split(' ')
       if (messageParts.length === 4 && messageParts[1] === "area") {
         // get the start area
         const sa = messageParts[2].split(',')
@@ -316,6 +337,72 @@ class Miner {
 
   }
 
+  setMineStart(x,y,z) {
+    this.targets.mineStart = new Vec3(parseInt(x), parseInt(y), parseInt(z))
+    this.targets.lastPos = null
+    this.targets.allDone = false
+    this.targets.colDone = false
+    this.targets.currentCol = 0
+    this.targets.lastTorchDrop = null
+  }
+  
+  setMineEnd(x,y,z) {
+    this.targets.mineEnd = new Vec3(parseInt(x), parseInt(y), parseInt(z))
+    this.targets.allDone = false
+    this.targets.colDone = false
+    this.targets.currentCol = 0
+    this.targets.lastTorchDrop = null
+  }
+  
+  setEquipmentChestLocation(x,y,z) {
+    this.targets.equipmentChestLocation = new Vec3(parseInt(x), parseInt(y), parseInt(z))
+  }
+  
+  setDropOffChestLocation(x,y,z) {
+    this.targets.dropOffChestLocation = new Vec3(parseInt(x), parseInt(y), parseInt(z))
+  }
+
+  goto(x,y,z) {
+    this.targets.position = new Vec3(parseInt(x), parseInt(y), parseInt(z))
+    this.prevState = this.state
+    this.state = STATE_GOTO
+  }
+
+  startMining() {
+    if (!this.targets.mineStart ||
+        !this.targets.mineEnd || 
+        !this.targets.dropOffChestLocation ||
+        !this.targets.equipmentChestLocation) {
+          return false
+    }
+
+    this.prevState = this.state
+    this.state = STATE_MINING
+    return true
+  }
+  
+  stop() {
+    this.prevState = this.state
+    this.state = STATE_STOPPED
+  }
+
+  dropItems() {
+    this.prevState = this.state
+    this.state = STATE_DROP
+  }
+
+  getInventory() {
+    const slots = this.bot.inventory.slots
+    var message = "I have: "
+    slots.forEach((item) => {
+      if (item) {
+        message += item.count + ' ' + item.name + ', '
+      }
+    })
+
+    return message
+  }
+
   setupRootState() {
     const bot = this.bot
     const miningRoot = createRootState(this.bot, this.targets)
@@ -324,6 +411,7 @@ class Miner {
     const follow = createFollowState(this.bot, this.targets)
     const defend = createDefendState(this.bot, this.targets)
     const drop = createDropState(this.bot, this.targets)
+    const goto = new BehaviorMoveTo(this.bot, this.targets)
     
     const self = this
     const transitions = [
@@ -340,7 +428,7 @@ class Miner {
           parent: miningRoot,
           child: idle,
           name: "Stop Mining",
-          shouldTransition: () => miningRoot.isFinished() || self.state === STATE_DEAD || self.state === STATE_STOPPED,
+          shouldTransition: () => miningRoot.isFinished() || self.state !== STATE_MINING,
           onTransition: () => {
             console.log("root.stop_mining")
             // if we quit because of no tools stop mining
@@ -408,6 +496,29 @@ class Miner {
       }),
       
       new StateTransition({
+          parent: idle,
+          child: goto,
+          name: "Goto position",
+          shouldTransition: () => self.state === STATE_GOTO,
+          onTransition: () => {
+            goto.setMoveTarget(self.targets.position)
+            console.log("root.move_goto")
+          },
+      }),
+      
+      new StateTransition({
+          parent: goto,
+          child: idle,
+          name: "Goto done",
+          shouldTransition: () => goto.isFinished(),
+          onTransition: () => {
+            self.prevState = self.state
+            self.state = STATE_STOPPED
+            console.log("root.idle")
+          }
+      }),
+      
+      new StateTransition({
           parent: miningRoot,
           child: idleEnd,
           name: "Drop items",
@@ -436,65 +547,6 @@ class Miner {
     new BotStateMachine(bot, rootState)
   }
 
-  setMineStart(x,y,z) {
-    this.targets.mineStart = new Vec3(parseInt(x), parseInt(y), parseInt(z))
-    this.targets.lastPos = null
-    this.targets.allDone = false
-    this.targets.colDone = false
-    this.targets.currentCol = 0
-    this.targets.lastTorchDrop = null
-  }
-  
-  setMineEnd(x,y,z) {
-    this.targets.mineEnd = new Vec3(parseInt(x), parseInt(y), parseInt(z))
-    this.targets.allDone = false
-    this.targets.colDone = false
-    this.targets.currentCol = 0
-    this.targets.lastTorchDrop = null
-  }
-  
-  setEquipmentChestLocation(x,y,z) {
-    this.targets.equipmentChestLocation = new Vec3(parseInt(x), parseInt(y), parseInt(z))
-  }
-  
-  setDropOffChestLocation(x,y,z) {
-    this.targets.dropOffChestLocation = new Vec3(parseInt(x), parseInt(y), parseInt(z))
-  }
-
-  startMining() {
-    if (!this.targets.mineStart ||
-        !this.targets.mineEnd || 
-        !this.targets.dropOffChestLocation ||
-        !this.targets.equipmentChestLocation) {
-          return false
-    }
-
-    this.prevState = this.state
-    this.state = STATE_MINING
-    return true
-  }
-  
-  stop() {
-    this.prevState = this.state
-    this.state = STATE_STOPPED
-  }
-
-  dropItems() {
-    this.prevState = this.state
-    this.state = STATE_DROP
-  }
-
-  getInventory() {
-    const slots = this.bot.inventory.slots
-    var message = "I have: "
-    slots.forEach((item) => {
-      if (item) {
-        message += item.count + ' ' + item.name + ', '
-      }
-    })
-
-    return message
-  }
 }
 
 module.exports = Miner;

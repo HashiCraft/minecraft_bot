@@ -25,6 +25,17 @@ class BehaviorFollow {
         this.defaultMove = new Movements(this.bot, this.bot.mcData)
         this.defaultMove.allowFreeMotion = true
         this.defaultMove.canDig = false
+       
+        const self = this
+        this.bot.on('death', () => {
+          if (self.cancelled)
+            return
+
+          if(!self.active)
+            return
+
+          self.onStateExited()
+        })
     }
     
     onStateEntered() {

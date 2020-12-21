@@ -13,12 +13,12 @@ class BehaviorFightMobs {
      * @param targets - The bot targets objects.
      */
     constructor(bot, targets) {
+        this.bot = bot;
+        this.targets = targets;
+       
         this.stateName = 'fightMobs';
         this.active = false;
         this.cancelled = false
-        this.bot = bot;
-        this.targets = targets;
-        this.attacking = false
         
         const self = this
         this.bot.on('stoppedAttacking', () => {
@@ -26,9 +26,6 @@ class BehaviorFightMobs {
             return
 
           if(!self.active)
-            return
-
-          if(!this.waitingToAttack)
             return
 
           console.log('Stopped attacking')
@@ -42,8 +39,18 @@ class BehaviorFightMobs {
           if(!self.active)
             return
 
-          this.waitingToAttack = false
           console.log('Started attacking')
+        })
+
+
+        this.bot.on('death', () => {
+          if (self.cancelled)
+            return
+
+          if(!self.active)
+            return
+
+          self.onStateExited()
         })
       
         this.mcData = this.bot.mcData
@@ -58,15 +65,17 @@ class BehaviorFightMobs {
 
     onStateExited() {
       console.log('exit fight behavior') 
-      this.bot.pvp.stop()
       this.cancelled = true
+
+      this.bot.pathfinder.setGoal(null)
+      this.bot.pvp.stop()
     }
 
     checkMobAndFight() {
       const mob = this.getMobToFight()
-      if (mob) {
-        this.waitingToAttack = true
+      const self = this
 
+      if (mob) {
         //this.bot.chat('You want to fight, then fight me')
         console.log('Fighting mob', mob.name)
       
@@ -76,10 +85,6 @@ class BehaviorFightMobs {
         if (!sword) {
           this.bot.chat('You want me to fight a ' + mob.name +'  with no weapons, I can see this going well')
           console.log('Weapon inventory sword: ', sword, 'shield:', shield)
-
-          // Fight bare handed
-          this.bot.pvp.attack(mob)
-          return
         }
 
         // Start attacking with weapons
@@ -93,7 +98,6 @@ class BehaviorFightMobs {
     
     equipWeaponsAndFight(mob, sword, shield) {
       const self = this
-
       this.bot.unequip('hand', () => {
         self.bot.equip(sword, 'hand', (error) => {
           if(error) {
