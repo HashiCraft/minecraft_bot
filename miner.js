@@ -181,6 +181,7 @@ class Miner {
 
     this.bot.on('kicked', (reason, loggedIn) => {
       console.log('Bot kicked', reason)
+      this.killBot()
     })
 
     this.bot.on('login', function() {
@@ -211,11 +212,14 @@ class Miner {
     })
     
     this.bot.on('death', () => {
+      this.clearKillTimer()
       console.log('Bot has met an unfortunate end')
     })
   }
 
   killBot(f) {
+    this.clearKillTimer()
+
     const self = this
     self.prevState = self.state
     self.state = STATE_QUIT
@@ -416,6 +420,7 @@ class Miner {
   stop() {
     this.prevState = this.state
     this.state = STATE_STOPPED
+    this.setKillTimer()
   }
 
   dropItems() {
@@ -439,7 +444,28 @@ class Miner {
     return this.state
   }
 
+  // set a timer to remove the bot after 
+  // 5 minutes inactivity
+  setKillTimer()  {
+    this.clearKillTimer()
+
+    const self = this
+    //  set a timeout for 5 mins
+    this.timeout  = setInterval(() => {
+      console.log('Kill bot due to inactivity')
+      self.bot.chat('Seems  like  you don\'t  need  me around here')
+      self.killBot()
+    },300000)
+  }
+
+  clearKillTimer()  {
+    if(this.timeout)
+      clearTimeout(this.timeout)
+  }
+
+
   setupRootState() {
+    const self = this
     const bot = this.bot
     const miningRoot = createRootState(this.bot, this.defaultMove, this.targets)
     const idle = new BehaviorIdle();
@@ -448,8 +474,10 @@ class Miner {
     const defend = createDefendState(this.bot, this.targets)
     const drop = createDropState(this.bot, this.targets)
     const goto = new BehaviorMoveTo(this.bot, this.targets)
-    
-    const self = this
+   
+    //  start the idle timer
+    this.setKillTimer()
+
     const transitions = [
       // needs tools
       new StateTransition({
@@ -457,7 +485,10 @@ class Miner {
           child: miningRoot,
           name: "Start mining",
           shouldTransition: () => self.state === STATE_MINING,
-          onTransition: () => console.log("root.start_mining"),
+          onTransition: () => {
+            self.clearKillTimer()
+            console.log("root.start_mining")
+          }
       }),
 
       new StateTransition({
@@ -477,7 +508,10 @@ class Miner {
           child: follow,
           name: "Start following",
           shouldTransition: () => self.state === STATE_FOLLOW,
-          onTransition: () => console.log("root.start_following"),
+          onTransition: () => {
+            console.log("root.start_following")
+            self.clearKillTimer()
+          }
       }),
       
       new StateTransition({
@@ -498,7 +532,10 @@ class Miner {
           child: defend,
           name: "Start defending",
           shouldTransition: () => self.state === STATE_DEFEND,
-          onTransition: () => console.log("root.start_defending"),
+          onTransition: () => {
+            console.log("root.start_defending")
+            self.clearKillTimer()
+          }
       }),
       
       new StateTransition({
@@ -517,7 +554,10 @@ class Miner {
           child: drop,
           name: "Drop items",
           shouldTransition: () => self.state === STATE_DROP,
-          onTransition: () => console.log("root.drop_items"),
+          onTransition: () => {
+            console.log("root.drop_items")
+            self.clearKillTimer()
+          }
       }),
       
       new StateTransition({
@@ -539,6 +579,7 @@ class Miner {
           onTransition: () => {
             goto.setMoveTarget(self.targets.position)
             console.log("root.move_goto")
+            self.clearKillTimer()
           },
       }),
       
@@ -575,6 +616,7 @@ class Miner {
     if(this.state == myState) {
       this.prevState = this.state
       this.state = STATE_STOPPED 
+      self.setKillTimer()
     }
   }
 
