@@ -13,7 +13,7 @@ class BehaviorEatMelon {
      * @param targets - The bot targets objects.
      */
     constructor(bot, targets) {
-        this.stateName = 'eatMelon';
+        this.stateName = 'eatFood';
         this.active = false;
         this.bot = bot;
         this.targets = targets;
@@ -24,17 +24,17 @@ class BehaviorEatMelon {
       this.active = true
       this.cancelled = false
       
-      const melon = this.bot.getFood()
+      const food = this.bot.getFood()
 
-      if(!melon) {
-        this.bot.chat("I'm hungy but there is no melon :(")
-        console.log("Can't eat, no melon")
+      if(!food) {
+        this.bot.chat("I'm hungry but there is no food :(")
+        console.log("Can't eat, no food")
       
         this.active = false
         return
       }
 
-      this.eatMelon(melon)
+      this.eatMelon(food)
 
       const self = this
       this.timeout = setTimeout(() => {
@@ -47,21 +47,21 @@ class BehaviorEatMelon {
       this.cancelled = true
     }
 
-    eatMelon(melon) {
+    eatMelon(food) {
       const self = this
-      this.bot.equip(melon, 'hand', (error) => {
+      this.bot.equip(food, 'hand', (error) => {
         if (error) {
-          console.log('error equiping melon', error)
+          console.log('error equiping food', error)
           self.done()
           return
         }
 
         self.bot.consume((error) => {
           if (error) {
-            console.log('error eating my melons', error)
+            console.log('error eating my food', error)
           }
 
-          console.log('munch munch, nice melon')
+          console.log('munch munch, nice ' + food.name)
           self.done()
           return
         })

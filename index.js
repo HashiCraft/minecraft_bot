@@ -182,6 +182,16 @@ app.get('/bot/:id/stop',(req, res) => {
   )
 })
 
+app.get('/bot/:id/status',(req, res) => {
+  miner.startMining()
+  res.send(
+    {
+    id: req.params.id,
+    status: miner.status()
+    }
+  )
+})
+
 app.get('/bot/:id/inventory',(req, res) => {
   const inv = miner.getInventory()
 
@@ -192,7 +202,6 @@ app.get('/bot/:id/inventory',(req, res) => {
     }
   )
 })
-
 
 // should we autostart the bot?
 if(nodeFlags.isset('start')) {

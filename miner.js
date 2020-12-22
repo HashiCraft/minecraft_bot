@@ -7,7 +7,6 @@ const Vec3 = require('vec3').Vec3
 
 const Movements = require('mineflayer-pathfinder').Movements
 const mineflayer = require('mineflayer')
-//const mineflayerViewer = require('prismarine-viewer').mineflayer
 const pathfinder = require('mineflayer-pathfinder').pathfinder
 const pvp = require('mineflayer-pvp').plugin
 
@@ -33,6 +32,23 @@ const STATE_DEFEND = 'STATE_DEFEND'
 const STATE_DEAD = 'STATE_DEAD'
 const STATE_DROP = 'STATE_DROP'
 const STATE_QUIT = 'STATE_QUIT'
+
+const blockIgnoreList = [
+  'powered_rail',
+  'rail',
+  'redstone_torch',
+  'hopper',
+] 
+
+const foodTypes = [
+  'melon_slice',
+  'baked_potato',
+  'cooked_chicken',
+  'cooked_porkchop',
+  'cooked_mutton',
+  'cooked_beef',
+  'bread',
+]
 
 class Miner {
   constructor() {}
@@ -92,7 +108,7 @@ class Miner {
     }
 
     this.bot.getFood = function() {
-      return self.bot.findInventoryItem('melon_slice');
+      return self.bot.findInventoryItem(foodTypes);
     }
 
     this.bot.getPickAxe = function() {
@@ -140,11 +156,18 @@ class Miner {
     // finds an item in the inventory by name or part of name
     this.bot.findInventoryItem = function(name) {
       var returnItem = null
+      var names = name
+       if(!Array.isArray(name)){
+         names = [name]
+       }
+
       const items = self.bot.inventory.items()
       items.forEach((item) => {
-        if(item.name.includes(name)) {
-          returnItem = item
-        }
+        names.forEach((n) => {
+          if(item.name.includes(n)) {
+            returnItem = item
+          }
+        })
       })
 
       return returnItem
@@ -226,6 +249,10 @@ class Miner {
       
       if (message === 'inventory') {
         bot.chat(self.getInventory())
+      }
+
+      if(message === 'status'){
+        bot.chat('Checking up on me? I might be ' + self.status + ' but then again I might be slacking off playing minecraft')
       }
       
       if (message === 'position') {
@@ -326,7 +353,7 @@ class Miner {
     })
 
     bot.on('spawn', () => {
-      console.log('Bot back again, old state:', self.state)
+      console.log('Bot back again, old state:', self.prevState)
 
       if(self.state = STATE_DEAD) {
         bot.chat('Oh, so I die in the line of duty and you expect me to get right back to work? Wow, the compassion')
@@ -403,6 +430,10 @@ class Miner {
     return message
   }
 
+  status(){
+    return this.state
+  }
+
   setupRootState() {
     const bot = this.bot
     const miningRoot = createRootState(this.bot, this.targets)
@@ -453,7 +484,7 @@ class Miner {
           parent: follow,
           child: idle,
           name: "Stop following",
-          shouldTransition: () => self.state !== STATE_FOLLOW,
+          shouldTransition: () => follow.isFinished() || self.state !== STATE_FOLLOW,
           onTransition: () => console.log("root.stop_following"),
       }),
       // end follow
@@ -471,7 +502,7 @@ class Miner {
           parent: defend,
           child: idle,
           name: "Stop following",
-          shouldTransition: () => self.state !== STATE_DEFEND,
+          shouldTransition: () => defend.isFinished() || self.state !== STATE_DEFEND,
           onTransition: () => console.log("root.stop_defending"),
       }),
       
@@ -487,7 +518,7 @@ class Miner {
           parent: drop,
           child: idle,
           name: "Drop items done",
-          shouldTransition: () => drop.isFinished(),
+          shouldTransition: () => drop.isFinished() || self.state !== STATE_DROP,
           onTransition: () => {
             self.prevState = self.state
             self.state = STATE_STOPPED
@@ -510,22 +541,11 @@ class Miner {
           parent: goto,
           child: idle,
           name: "Goto done",
-          shouldTransition: () => goto.isFinished(),
+          shouldTransition: () => goto.isFinished() || self.state !== STATE_GOTO,
           onTransition: () => {
             self.prevState = self.state
             self.state = STATE_STOPPED
             console.log("root.idle")
-          }
-      }),
-      
-      new StateTransition({
-          parent: miningRoot,
-          child: idleEnd,
-          name: "Drop items",
-          shouldTransition: () => self.state === STATE_QUIT,
-          onTransition: () => {
-            console.log("root.quitting")
-            self.bot.quit('Gracefully shutting down')
           }
       }),
       
