@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BehaviorSetMiningTarget = void 0;
 
-
 const Vec3 = require('vec3').Vec3
 /**
  * This behavior attempts to find nearby mineable items
@@ -47,11 +46,11 @@ class BehaviorSetMiningTarget {
       const xDistCurAbs = (xDistCur < 0) ? xDistCur*-1 : xDistCur // 59
       const zDistCurAbs = (zDistCur < 0) ? zDistCur*-1 : zDistCur // 2
    
-      console.log("last:", this.targets.lastPos)
-      console.log("mineStart:", this.targets.mineStart)
-      console.log("mineEnd:", this.targets.mineEnd)
-      console.log("xDistMax:", xDistMax, "zDistMax", zDistMax, "xDistCur", xDistCur, "zDistCur", zDistCur)
-      console.log("xDistMaxAbs:", xDistMaxAbs, "zDistMaxAbs", zDistMaxAbs, "xDistCurAbs", xDistCurAbs, "zDistCurAbs", zDistCurAbs)
+      //console.log("last:", this.targets.lastPos)
+      //console.log("mineStart:", this.targets.mineStart)
+      //console.log("mineEnd:", this.targets.mineEnd)
+      //console.log("xDistMax:", xDistMax, "zDistMax", zDistMax, "xDistCur", xDistCur, "zDistCur", zDistCur)
+      //console.log("xDistMaxAbs:", xDistMaxAbs, "zDistMaxAbs", zDistMaxAbs, "xDistCurAbs", xDistCurAbs, "zDistCurAbs", zDistCurAbs)
       
       if (xDistCurAbs <= 0 && zDistCurAbs <= 0) {
         console.log("Cant move any further, all done")
@@ -99,7 +98,7 @@ class BehaviorSetMiningTarget {
       }
 
       this.targets.position = this.targets.lastPos
-      console.log("Set new target", this.targets.lastPos, "col:", this.targets.currentCol, "incr", incDir, "xMax", xDistMaxAbs, "zMax", zDistMaxAbs)
+      //console.log("Set new target", this.targets.lastPos, "col:", this.targets.currentCol, "incr", incDir, "xMax", xDistMaxAbs, "zMax", zDistMaxAbs)
     }
 }
 

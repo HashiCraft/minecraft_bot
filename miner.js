@@ -195,6 +195,11 @@ class Miner {
       self.bot.mcData = require('minecraft-data')(self.bot.version)
       self.defaultMove = new Movements(self.bot, self.bot.mcData)
 
+      // ensure only certain blocks are broken
+      blockIgnoreList.forEach((block) => {
+        self.defaultMove.blocksCantBreak.add(self.bot.mcData.blocksByName[block].id)
+      })
+
       self.setupEvents()
       self.setupRootState()
 
@@ -436,7 +441,7 @@ class Miner {
 
   setupRootState() {
     const bot = this.bot
-    const miningRoot = createRootState(this.bot, this.targets)
+    const miningRoot = createRootState(this.bot, this.defaultMove, this.targets)
     const idle = new BehaviorIdle();
     const idleEnd = new BehaviorIdle();
     const follow = createFollowState(this.bot, this.targets)
@@ -462,12 +467,7 @@ class Miner {
           shouldTransition: () => miningRoot.isFinished() || self.state !== STATE_MINING,
           onTransition: () => {
             console.log("root.stop_mining")
-            // if we quit because of no tools stop mining
-            if(this.targets.noTools) {
-              self.targets.noTools = false
-              self.prevState = self.state
-              self.state = STATE_STOPPED
-            }
+            self.setStoppedState(STATE_MINING)
           },
       }),
      
@@ -485,7 +485,10 @@ class Miner {
           child: idle,
           name: "Stop following",
           shouldTransition: () => follow.isFinished() || self.state !== STATE_FOLLOW,
-          onTransition: () => console.log("root.stop_following"),
+          onTransition: () => {
+            console.log("root.stop_following")
+            self.setStoppedState(STATE_FOLLOW)
+          },
       }),
       // end follow
 
@@ -503,7 +506,10 @@ class Miner {
           child: idle,
           name: "Stop following",
           shouldTransition: () => defend.isFinished() || self.state !== STATE_DEFEND,
-          onTransition: () => console.log("root.stop_defending"),
+          onTransition: () => {
+            console.log("root.stop_defending")
+            self.setStoppedState(STATE_DEFEND)
+          },
       }),
       
       new StateTransition({
@@ -520,9 +526,8 @@ class Miner {
           name: "Drop items done",
           shouldTransition: () => drop.isFinished() || self.state !== STATE_DROP,
           onTransition: () => {
-            self.prevState = self.state
-            self.state = STATE_STOPPED
             console.log("root.idle")
+            self.setStoppedState(STATE_DROP)
           }
       }),
       
@@ -543,16 +548,15 @@ class Miner {
           name: "Goto done",
           shouldTransition: () => goto.isFinished() || self.state !== STATE_GOTO,
           onTransition: () => {
-            self.prevState = self.state
-            self.state = STATE_STOPPED
             console.log("root.idle")
+            self.setStoppedState(STATE_GOTO)
           }
       }),
       
       new StateTransition({
           parent: idle,
           child: idleEnd,
-          name: "Drop items",
+          name: "Bot quit",
           shouldTransition: () => self.state === STATE_QUIT,
           onTransition: () => {
             console.log("root.quitting")
@@ -565,6 +569,13 @@ class Miner {
     rootState.name = "rootState";
   
     new BotStateMachine(bot, rootState)
+  }
+
+  setStoppedState(myState) {
+    if(this.state == myState) {
+      this.prevState = this.state
+      this.state = STATE_STOPPED 
+    }
   }
 
 }

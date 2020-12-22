@@ -19,6 +19,7 @@ class BehaviorDropInventoryAtChest {
         this.targets = targets
         this.mcData = this.bot.mcData
         this.cancelled = false
+        this.tools = this.targets.tools
     }
     
     onStateEntered() {
@@ -27,9 +28,6 @@ class BehaviorDropInventoryAtChest {
       this.cancelled = false
 
       const self = this
-
-      // print the player stats
-      console.log('bot health', this.bot.health, 'bot food', this.bot.food)
 
       // find a chest
       const chestToOpen = this.bot.findBlock({
@@ -123,8 +121,13 @@ class BehaviorDropInventoryAtChest {
       var deposit = true
 
       equipmentList.forEach((di) => {
-        if(item.name.includes(di.name)) {
-          deposit = false
+        if(this.tools) {
+          // if we are depositing tools
+          if(item.name.includes(di.name))
+            deposit = true
+        } else {
+          if(item.name.includes(di.name))
+            deposit = false
         }
       })
 

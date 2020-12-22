@@ -99,18 +99,16 @@ class BehaviorMineNearbyItems {
       if (block !== null && block !== undefined && block.position != null && this.bot.canDigBlock(block)) {
 
         const self = this
-        this.bot.lookAt(block.position, true, function() {
-          if (!self.bot.canSeeBlock(block)) {
-            //console.log("ignoring block:", block.name, "can see:", self.bot.canSeeBlock(block))
-            self.mineItem(items)
-            return
-          }
+        if (!self.bot.canSeeBlock(block)) {
+          self.mineItem(items)
+          return
+        }
 
-          console.log("Mining nearby item : ", block.name)
-          self.bot.dig(block, function() {
-            //console.log("Completed mining", block.name)
-            self.mineItem(items) 
-          })
+        console.log("Mining nearby item : ", block.name)
+        self.bot.dig(block).then(() => {
+          self.mineItem(items) 
+        }).catch(err => {
+          console.log(err)
         })
 
       } else {

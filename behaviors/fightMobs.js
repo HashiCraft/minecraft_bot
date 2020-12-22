@@ -42,7 +42,6 @@ class BehaviorFightMobs {
           console.log('Started attacking')
         })
 
-
         this.bot.on('death', () => {
           if (self.cancelled)
             return

@@ -2,7 +2,6 @@ const {
     StateTransition,
     BehaviorIdle,
     BehaviorEquipItem,
-    BehaviorMoveTo,
     NestedStateMachine,
 } = require('mineflayer-statemachine');
 
@@ -11,21 +10,19 @@ const BehaviorSetMiningTarget = require('../behaviors/setMiningTarget');
 const BehaviorDropTorch = require('../behaviors/dropTorch');
 const BehaviorEatMelon = require('../behaviors/eatMelon');
 const BehaviorFightMobs = require('../behaviors/fightMobs');
-const createGetToolsState = require('./getTools')
-const createDropItemsState = require('./dropItems')
+const BehaviorMoveTo = require('../behaviors/moveTo');
   
 // mine items is the sub state machine which handles the mining process
 // this state ensures that the bot will fight off any mobs
 // and also make sure it eats and has the right tools
-function createDoMineState(bot, targets) {
+function createDoMineState(bot, movements, targets) {
   const idle = new BehaviorIdle();
   const idleEquipped = new BehaviorIdle();
   const idleEnd = new BehaviorIdle();
-  const moveMineState = new BehaviorMoveTo(bot, targets)
+  const moveMineState = new BehaviorMoveTo(bot, movements, targets)
   const mineNearbyItems = new BehaviorMineNearbyItems(bot, targets)
   const setMiningTarget = new BehaviorSetMiningTarget(bot, targets)
   const dropTorch = new BehaviorDropTorch(bot, targets)
-  const getPickAxeState = createGetToolsState(bot, targets)
   const equipPickAxe = new BehaviorEquipItem(bot, targets)
   const eatMelon = new BehaviorEatMelon(bot, targets)
   const fightMobs = new BehaviorFightMobs(bot, targets)
