@@ -38,7 +38,6 @@ class BehaviorDropTorch {
       const xDistAbs = (xDist < 0) ? xDist * -1 : xDist
 
       if(xDistAbs > 5 || zDistAbs > 5) {
-        this.targets.lastTorchDrop = new Vec3(this.bot.entity.position.x, this.bot.entity.position.y, this.bot.entity.position.z)
         
         // check for nearby torches
         const torch = this.bot.findBlock({
@@ -95,15 +94,16 @@ class BehaviorDropTorch {
       var destPos = new Vec3(this.bot.entity.position.x, this.bot.entity.position.y, this.bot.entity.position.z)
 
       if(direction === 'n')
-        destPos = destPos.offset(-1,-1,0)
+        destPos = destPos.offset(0, -1, -1)
       if(direction === 's')
-        destPos = destPos.offset(1,-1,0)
+        destPos = destPos.offset(0, -1, 1)
       if(direction === 'e')
-        destPos = destPos.offset(0,-1,-1)
+        destPos = destPos.offset(-1, -1, 0)
       if(direction === 'w')
-        destPos = destPos.offset(0,-1,1)
+        destPos = destPos.offset(1, -1, 0)
 
-      console.log(destPos)
+      console.log('Add  torch' + destPos)
+      this.targets.lastTorchDrop =  destPos 
 
       var destination = this.bot.blockAt(destPos)
       if(!destination) {

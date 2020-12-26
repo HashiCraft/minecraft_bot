@@ -5,6 +5,9 @@ exports.BehaviorGetEquipmentFromChest = void 0;
  * This behavior will attempt to interact with the target block. If the target
  * block could not be interacted with for any reason, this behavior fails silently.
  */
+
+const common = require('../common')
+
 class BehaviorGetEquipmentFromChest {
     /**
      * Creates a new mine block behavior.
@@ -18,15 +21,6 @@ class BehaviorGetEquipmentFromChest {
         this.cancelled = true;
         this.bot = bot;
         this.targets = targets;
-
-        this.equipmentList = [
-          {name: 'pickaxe', required: true, count: 1}, 
-          {name: 'melon_slice', required: true, count: 64}, 
-          {name: 'torch', required: true, count: 64},
-          {name: 'sword', required: false, count: 1},
-          {name: 'shield', required: false, count: 1},
-          {name: 'shovel', required: false, count: 1},
-        ]
 
         this.mcData = this.bot.mcData
         this.targets.itemsMissing = false
@@ -52,7 +46,7 @@ class BehaviorGetEquipmentFromChest {
       const chest = this.bot.openChest(chestToOpen)
       const self = this
       this.bot.lookAt(chestToOpen.position, true, () => {
-        var itemList = [...this.equipmentList]
+        var itemList = [...common.equipmentList]
 
         //console.log("opening chest", chest, chestToOpen)
         chest.on('open', function() {
@@ -93,10 +87,9 @@ class BehaviorGetEquipmentFromChest {
         return
       }
       
-      console.log('Fetching ' + item.name + ' from chest')
       const item_id = this.getItemId(item.name, chest)
 
-      if (!item_id && item.required) {
+      if (!item_id && item.required && (!this.bot.hasFood() && item.type === 'food')) {
         this.bot.chat("How I am supposed to get a " + item.name + " when there is not one in the chest?")
         console.log("No " + item.name + " in chest")
 
@@ -106,11 +99,12 @@ class BehaviorGetEquipmentFromChest {
         chest.close()
         return
       } else {
-        var itemsToFetch = chest.count(item_id, null) //12
-
-        itemsToFetch = (itemsToFetch < item.count) ? itemsToFetch : item.count
-
         const self = this
+        
+        var itemsToFetch = chest.count(item_id, null) //12
+        itemsToFetch = (itemsToFetch < item.count) ? itemsToFetch : item.count
+      
+        console.log('Fetching ' + item.name + ' from chest')
         chest.withdraw(item_id, null, itemsToFetch,function () {
           self.fetchItem(chest, items)
         })

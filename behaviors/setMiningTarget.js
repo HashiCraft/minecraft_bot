@@ -60,6 +60,7 @@ class BehaviorSetMiningTarget {
         this.targets.allDone = true
         this.targets.position = null
         this.targets.lastPos = null
+        this.targets.mineBlocks = []
         return
       }
 
@@ -71,8 +72,13 @@ class BehaviorSetMiningTarget {
         const colDirection = (zDistMax > 0) ? (this.targets.currentCol * -1) : this.targets.currentCol
 
         // x is the Column
-        this.targets.lastPos.x += (xDistMax > 0) ? -1 : 1
+        var incr = (xDistMax > 0) ? -1 : 1
+        this.targets.lastPos.x += incr
         this.targets.lastPos.z = this.targets.mineStart.z + colDirection
+
+        this.targets.mineBlocks = []
+        this.targets.mineBlocks.push(new Vec3(this.targets.lastPos.x + incr, this.targets.lastPos.y, this.targets.lastPos.z))
+        this.targets.mineBlocks.push(new Vec3(this.targets.lastPos.x + incr, this.targets.lastPos.y + 1 , this.targets.lastPos.z))
 
         // check if the column is bigger than max
         if (xDistCurAbs <=0) {
@@ -85,8 +91,13 @@ class BehaviorSetMiningTarget {
         incDir = "z"
         const colDirection = (xDistMax > 0) ? (this.targets.currentCol * -1) : this.targets.currentCol
 
-        this.targets.lastPos.z += (zDistMax > 0) ? -1 : 1
+        var incr = (zDistMax > 0) ? -1 : 1
+        this.targets.lastPos.z += incr
         this.targets.lastPos.x = this.targets.mineStart.x + colDirection
+        
+        this.targets.mineBlocks = []
+        this.targets.mineBlocks.push(new Vec3(this.targets.lastPos.x, this.targets.lastPos.y, this.targets.lastPos.z + incr))
+        this.targets.mineBlocks.push(new Vec3(this.targets.lastPos.x, this.targets.lastPos.y + 1 , this.targets.lastPos.z + incr))
         
         // check if the column is bigger than max
         if (zDistCurAbs <=0) {

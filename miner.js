@@ -23,32 +23,7 @@ const {
     BehaviorMoveTo,
 } = require('mineflayer-statemachine');
 
-
-const STATE_STOPPED = 'STATE_STOPPED'
-const STATE_MINING = 'STATE_MINING'
-const STATE_FOLLOW = 'STATE_FOLLOW'
-const STATE_GOTO = 'STATE_GOTO'
-const STATE_DEFEND = 'STATE_DEFEND'
-const STATE_DEAD = 'STATE_DEAD'
-const STATE_DROP = 'STATE_DROP'
-const STATE_QUIT = 'STATE_QUIT'
-
-const blockIgnoreList = [
-  'powered_rail',
-  'rail',
-  'redstone_torch',
-  'hopper',
-] 
-
-const foodTypes = [
-  'melon_slice',
-  'baked_potato',
-  'cooked_chicken',
-  'cooked_porkchop',
-  'cooked_mutton',
-  'cooked_beef',
-  'bread',
-]
+const common = require('./common')
 
 class Miner {
   constructor() {}
@@ -60,8 +35,8 @@ class Miner {
     this.bot.loadPlugin(pathfinder)
     this.bot.loadPlugin(pvp)
 
-    this.prevState = STATE_STOPPED
-    this.state = STATE_STOPPED
+    this.prevState = common.STATE_STOPPED
+    this.state = common.STATE_STOPPED
     this.targets = {
       colDone: false,
       allDone: false,
@@ -108,7 +83,7 @@ class Miner {
     }
 
     this.bot.getFood = function() {
-      return self.bot.findInventoryItem(foodTypes);
+      return self.bot.findInventoryItem(common.foodTypes);
     }
 
     this.bot.getPickAxe = function() {
@@ -120,22 +95,9 @@ class Miner {
     }
     
     this.bot.inDanger = function() {
-      const hostileTypes = [
-        'cave_spider', 
-        'spider', 
-        'creeper', 
-        'skeleton', 
-        'phantom', 
-        'shulker', 
-        'slime', 
-        'witch',
-        'zombie', 
-        'zombie_villager'
-      ]
-
       // Only look for mobs within 16 blocks
       const filter = e => e.type === 'mob' && e.position.distanceTo(self.bot.entity.position) < 16 &&
-        hostileTypes.includes(e.name)
+        common.hostileTypes.includes(e.name)
 
       const mob = self.bot.nearestEntity(filter)
       if (mob && mob.position) {
@@ -150,7 +112,7 @@ class Miner {
     }
     
     this.bot.isHungry = function() {
-      return (self.bot.food < 18)
+      return (self.bot.food < 16)
     }
 
     // finds an item in the inventory by name or part of name
@@ -197,7 +159,7 @@ class Miner {
       self.defaultMove = new Movements(self.bot, self.bot.mcData)
 
       // ensure only certain blocks are broken
-      blockIgnoreList.forEach((block) => {
+      common.blockIgnoreList.forEach((block) => {
         self.defaultMove.blocksCantBreak.add(self.bot.mcData.blocksByName[block].id)
       })
 
@@ -222,11 +184,11 @@ class Miner {
 
     const self = this
     self.prevState = self.state
-    self.state = STATE_QUIT
+    self.state = common.STATE_QUIT
     if(this.bot) {
       this.bot.once('end', () => {
         self.prevState = self.state
-        self.state = STATE_STOPPED
+        self.state = common.STATE_STOPPED
         self.bot = null
        
         // if there is a call back 
@@ -261,7 +223,7 @@ class Miner {
       }
 
       if(message === 'status'){
-        bot.chat('Checking up on me? I might be ' + self.status + ' but then again I might be slacking off playing minecraft')
+        bot.chat('Checking up on me? I might be ' + self.state + ' but then again I might be slacking off playing minecraft')
       }
       
       if (message === 'position') {
@@ -290,7 +252,7 @@ class Miner {
         const target = bot.players[username].entity
         self.targets.followEntity = target
         self.prevState = self.state
-        self.state = STATE_FOLLOW
+        self.state = common.STATE_FOLLOW
         bot.chat('Whatever you say, following you ' + username)
       }
       
@@ -298,14 +260,14 @@ class Miner {
         const target = bot.players[username].entity
         self.targets.followEntity = target
         self.prevState = self.state
-        self.state = STATE_DEFEND
-        bot.chat('Your meat shield now am i ' + username + '?')
+        self.state = common.STATE_DEFEND
+        bot.chat('Your meat shield now am I ' + username + '?')
       }
       
       if (message === 'stop') {
         self.stop()
         console.log("stop")
-        bot.chat('What? I can quit? Finally I can watch that episode of Spampy Big Nose')
+        bot.chat('What? I can quit? Finally I can watch that episode of Stampy Big Nose')
       }
 
       if (messageParts.length === 4 && messageParts[1] === "area") {
@@ -352,22 +314,22 @@ class Miner {
 
     bot.on('kicked', (reason, loggedIn) => {
       self.prevState = self.state
-      self.state = STATE_STOPPED
+      self.state = common.STATE_STOPPED
     })
     
     bot.on('death', () => {
       self.prevState = self.state
-      self.state = STATE_DEAD
+      self.state = common.STATE_DEAD
       bot.chat('Ow, you can not believe how much that hurt')
     })
 
     bot.on('spawn', () => {
       console.log('Bot back again, old state:', self.prevState)
 
-      if(self.state = STATE_DEAD) {
+      if(self.state = common.STATE_DEAD) {
         bot.chat('Oh, so I die in the line of duty and you expect me to get right back to work? Wow, the compassion')
         self.state = self.prevState
-        self.prevState = STATE_DEAD
+        self.prevState = common.STATE_DEAD
       }
     })
 
@@ -401,7 +363,7 @@ class Miner {
   goto(x,y,z) {
     this.targets.position = new Vec3(parseInt(x), parseInt(y), parseInt(z))
     this.prevState = this.state
-    this.state = STATE_GOTO
+    this.state = common.STATE_GOTO
   }
 
   startMining() {
@@ -413,19 +375,19 @@ class Miner {
     }
 
     this.prevState = this.state
-    this.state = STATE_MINING
+    this.state = common.STATE_MINING
     return true
   }
   
   stop() {
     this.prevState = this.state
-    this.state = STATE_STOPPED
+    this.state = common.STATE_STOPPED
     this.setKillTimer()
   }
 
   dropItems() {
     this.prevState = this.state
-    this.state = STATE_DROP
+    this.state = common.STATE_DROP
   }
 
   getInventory() {
@@ -453,7 +415,7 @@ class Miner {
     //  set a timeout for 5 mins
     this.timeout  = setInterval(() => {
       console.log('Kill bot due to inactivity')
-      self.bot.chat('Seems  like  you don\'t  need  me around here')
+      self.bot.chat('Seems like you don\'t need me around here, I\'m off before you change your mind!')
       self.killBot()
     },300000)
   }
@@ -484,7 +446,7 @@ class Miner {
           parent: idle,
           child: miningRoot,
           name: "Start mining",
-          shouldTransition: () => self.state === STATE_MINING,
+          shouldTransition: () => self.state === common.STATE_MINING,
           onTransition: () => {
             self.clearKillTimer()
             console.log("root.start_mining")
@@ -495,10 +457,10 @@ class Miner {
           parent: miningRoot,
           child: idle,
           name: "Stop Mining",
-          shouldTransition: () => miningRoot.isFinished() || self.state !== STATE_MINING,
+          shouldTransition: () => miningRoot.isFinished() || self.state !== common.STATE_MINING,
           onTransition: () => {
             console.log("root.stop_mining")
-            self.setStoppedState(STATE_MINING)
+            self.setStoppedState(common.STATE_MINING)
           },
       }),
      
@@ -507,7 +469,7 @@ class Miner {
           parent: idle,
           child: follow,
           name: "Start following",
-          shouldTransition: () => self.state === STATE_FOLLOW,
+          shouldTransition: () => self.state === common.STATE_FOLLOW,
           onTransition: () => {
             console.log("root.start_following")
             self.clearKillTimer()
@@ -518,7 +480,7 @@ class Miner {
           parent: follow,
           child: idle,
           name: "Stop following",
-          shouldTransition: () => follow.isFinished() || self.state !== STATE_FOLLOW,
+          shouldTransition: () => follow.isFinished() || self.state !== common.STATE_FOLLOW,
           onTransition: () => {
             console.log("root.stop_following")
             self.setStoppedState(STATE_FOLLOW)
@@ -531,7 +493,7 @@ class Miner {
           parent: idle,
           child: defend,
           name: "Start defending",
-          shouldTransition: () => self.state === STATE_DEFEND,
+          shouldTransition: () => self.state === common.STATE_DEFEND,
           onTransition: () => {
             console.log("root.start_defending")
             self.clearKillTimer()
@@ -542,10 +504,10 @@ class Miner {
           parent: defend,
           child: idle,
           name: "Stop following",
-          shouldTransition: () => defend.isFinished() || self.state !== STATE_DEFEND,
+          shouldTransition: () => defend.isFinished() || self.state !== common.STATE_DEFEND,
           onTransition: () => {
             console.log("root.stop_defending")
-            self.setStoppedState(STATE_DEFEND)
+            self.setStoppedState(common.STATE_DEFEND)
           },
       }),
       
@@ -553,7 +515,7 @@ class Miner {
           parent: idle,
           child: drop,
           name: "Drop items",
-          shouldTransition: () => self.state === STATE_DROP,
+          shouldTransition: () => self.state === common.STATE_DROP,
           onTransition: () => {
             console.log("root.drop_items")
             self.clearKillTimer()
@@ -564,10 +526,10 @@ class Miner {
           parent: drop,
           child: idle,
           name: "Drop items done",
-          shouldTransition: () => drop.isFinished() || self.state !== STATE_DROP,
+          shouldTransition: () => drop.isFinished() || self.state !== common.STATE_DROP,
           onTransition: () => {
             console.log("root.idle")
-            self.setStoppedState(STATE_DROP)
+            self.setStoppedState(common.STATE_DROP)
           }
       }),
       
@@ -575,7 +537,7 @@ class Miner {
           parent: idle,
           child: goto,
           name: "Goto position",
-          shouldTransition: () => self.state === STATE_GOTO,
+          shouldTransition: () => self.state === common.STATE_GOTO,
           onTransition: () => {
             goto.setMoveTarget(self.targets.position)
             console.log("root.move_goto")
@@ -587,10 +549,10 @@ class Miner {
           parent: goto,
           child: idle,
           name: "Goto done",
-          shouldTransition: () => goto.isFinished() || self.state !== STATE_GOTO,
+          shouldTransition: () => goto.isFinished() || self.state !== common.STATE_GOTO,
           onTransition: () => {
             console.log("root.idle")
-            self.setStoppedState(STATE_GOTO)
+            self.setStoppedState(common.STATE_GOTO)
           }
       }),
       
@@ -598,7 +560,7 @@ class Miner {
           parent: idle,
           child: idleEnd,
           name: "Bot quit",
-          shouldTransition: () => self.state === STATE_QUIT,
+          shouldTransition: () => self.state === common.STATE_QUIT,
           onTransition: () => {
             console.log("root.quitting")
             self.bot.quit('Gracefully shutting down')
@@ -615,8 +577,8 @@ class Miner {
   setStoppedState(myState) {
     if(this.state == myState) {
       this.prevState = this.state
-      this.state = STATE_STOPPED 
-      self.setKillTimer()
+      this.state = common.STATE_STOPPED 
+      this.setKillTimer()
     }
   }
 

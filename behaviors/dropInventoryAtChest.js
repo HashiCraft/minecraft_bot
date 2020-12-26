@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BehaviorDropInventoryAtChest = void 0;
+
+const common = require('../common')
+
 /**
  * This behavior will attempt to interact with the target block. If the target
  * block could not be interacted with for any reason, this behavior fails silently.
@@ -109,18 +112,10 @@ class BehaviorDropInventoryAtChest {
     }
 
     shouldDeposit(item) {
-      const equipmentList = [
-        {name: 'pickaxe', required: true, count: 1}, 
-        {name: 'melon_slice', required: true, count: 64}, 
-        {name: 'torch', required: true, count: 64},
-        {name: 'sword', required: false, count: 1},
-        {name: 'shield', required: false, count: 1},
-        {name: 'shovel', required: false, count: 1},
-      ]
         
       var deposit = true
 
-      equipmentList.forEach((di) => {
+      common.equipmentList.forEach((di) => {
         if(this.tools) {
           // if we are depositing tools
           if(item.name.includes(di.name))

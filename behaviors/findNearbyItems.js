@@ -19,6 +19,27 @@ class BehaviorMineNearbyItems {
         this.bot = bot;
         this.targets = targets;
         this.mcData = this.bot.mcData
+
+        const self = this
+        this.bot.on('diggingCompleted', () => {
+          if (self.cancelled)
+            return
+
+          if(!self.active)
+            return
+
+          self.bot.stopDigging()
+        })
+        
+        this.bot.on('diggingAborted', () => {
+          if (self.cancelled)
+            return
+
+          if(!self.active)
+            return
+
+          self.bot.stopDigging()
+        })
     }
     
     onStateEntered() {
@@ -56,7 +77,6 @@ class BehaviorMineNearbyItems {
         this.active = false
         return
       }
-
 
       const pickaxe = this.bot.getPickAxe()
       if (!pickaxe) {
