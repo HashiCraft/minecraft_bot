@@ -1,3 +1,5 @@
+const Vec3 = require('vec3').Vec3
+
 /**
  * This behavior will attempt to break the target block. If the target block
  * could not be mined for any reason, this behavior fails silently.
@@ -17,7 +19,18 @@ class BehaviorMineBlock  {
       return
     }
 
-    this.breakBlock()
+
+    // mine all the columns
+    for(var c = 0; c < this.targets.mineCols; c++)  {
+      var pos
+      if(this.targets.mineDirection === 'x') {
+        pos = new Vec3(this.targets.position.x += this.targets.mineDirection, this.targets.position.y,  this.targets.position.z)
+      } else {
+        pos = new Vec3(this.targets.position.x, this.targets.position.y,  this.targets.position.z  += this.targets.mineDirection)
+      }
+
+      this.breakBlock(pos)
+    }
   }
 
   onStateExited() {
@@ -27,8 +40,8 @@ class BehaviorMineBlock  {
     } 
   }
 
-  breakBlock() {
-    const block = this.bot.blockAt(this.targets.position)
+  breakBlock(pos) {
+    const block = this.bot.blockAt(pos)
     const self = this
 
     if (block == null || !this.bot.canDigBlock(block) || block.name == 'air') {
@@ -38,7 +51,7 @@ class BehaviorMineBlock  {
       return
     }
 
-    console.log(`[MineBlock] Breaking block '${block.displayName}' at ${this.targets.position.toString()}`)
+    console.log(`[MineBlock] Breaking block '${block.displayName}' at ${pos.toString()}`)
 
     const tool = this.getBestTool(block)
     console.log('equipping tool', tool)
@@ -71,7 +84,7 @@ class BehaviorMineBlock  {
     }
   }
 
-  getBestTool (block  )  {
+  getBestTool (block)  {
     const items = this.bot.inventory.items()
     for (const i in block.harvestTools) {
       const id = parseInt(i, 10)

@@ -326,10 +326,14 @@ class Miner {
     bot.on('spawn', () => {
       console.log('Bot back again, old state:', self.prevState)
 
-      if(self.state = common.STATE_DEAD) {
+      if(self.state === common.STATE_DEAD) {
         bot.chat('Oh, so I die in the line of duty and you expect me to get right back to work? Wow, the compassion')
         self.state = self.prevState
         self.prevState = common.STATE_DEAD
+
+        if(self.state === common.STATE_STOPPED)
+          self.setKillTimer()
+
       }
     })
 
@@ -409,6 +413,7 @@ class Miner {
   // set a timer to remove the bot after 
   // 5 minutes inactivity
   setKillTimer()  {
+    console.log('Set kill timer')
     this.clearKillTimer()
 
     const self = this
@@ -421,8 +426,10 @@ class Miner {
   }
 
   clearKillTimer()  {
-    if(this.timeout)
+    if(this.timeout) {
+      console.log('clear kill timer')
       clearTimeout(this.timeout)
+    }
   }
 
 

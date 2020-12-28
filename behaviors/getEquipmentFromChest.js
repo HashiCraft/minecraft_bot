@@ -18,7 +18,7 @@ class BehaviorGetEquipmentFromChest {
     constructor(bot, targets) {
         this.stateName = 'getPickaxeFromChest';
         this.active = false;
-        this.cancelled = true;
+        this.cancelled = false;
         this.bot = bot;
         this.targets = targets;
 
@@ -27,6 +27,7 @@ class BehaviorGetEquipmentFromChest {
     }
     
     onStateEntered() {
+      const self = this
       this.active = true
       this.cancelled = false
       this.targets.itemsMissing = false
@@ -44,15 +45,10 @@ class BehaviorGetEquipmentFromChest {
       }
 
       const chest = this.bot.openChest(chestToOpen)
-      const self = this
-      this.bot.lookAt(chestToOpen.position, true, () => {
+      chest.on('open', function() {
         var itemList = [...common.equipmentList]
-
-        //console.log("opening chest", chest, chestToOpen)
-        chest.on('open', function() {
-          //console.log("open chest")
-          self.fetchItem(chest, itemList)
-        })
+        console.log('open',itemList)
+        self.fetchItem(chest, itemList)
       })
     }
 
@@ -86,10 +82,18 @@ class BehaviorGetEquipmentFromChest {
         this.fetchItem(chest, items)
         return
       }
+
+      if(item.type === 'food' && this.bot.hasFood()) {
+        // got food skip
+        this.fetchItem(chest, items)
+        return
+      }
+
+      console.log('checking ', item)
       
       const item_id = this.getItemId(item.name, chest)
 
-      if (!item_id && item.required && (!this.bot.hasFood() && item.type === 'food')) {
+      if (!item_id && item.required) {
         this.bot.chat("How I am supposed to get a " + item.name + " when there is not one in the chest?")
         console.log("No " + item.name + " in chest")
 

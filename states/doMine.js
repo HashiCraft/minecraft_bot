@@ -110,6 +110,14 @@ function createDoMineState(bot, movements, targets) {
     
     new StateTransition({
         parent: mineBlock1,
+        child: idleEnd,
+        name: "no tools",
+        shouldTransition: () => mineBlock1.isFinished() && !bot.hasTools(),
+        onTransition: () => console.log("mineItems.no_tools"),
+    }),
+    
+    new StateTransition({
+        parent: mineBlock1,
         child: mineBlock2,
         name: "mine block 2",
         shouldTransition: () => mineBlock1.isFinished(),
@@ -117,6 +125,14 @@ function createDoMineState(bot, movements, targets) {
           console.log("mineItems.mine_block_2")
           targets.position = targets.mineBlocks[0]
         }
+    }),
+    
+    new StateTransition({
+        parent: mineBlock2,
+        child: idleEnd,
+        name: "no tools",
+        shouldTransition: () => mineBlock2.isFinished() && !bot.hasTools(),
+        onTransition: () => console.log("mineItems.no_tools"),
     }),
     
     new StateTransition({

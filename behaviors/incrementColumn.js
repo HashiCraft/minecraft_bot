@@ -20,8 +20,8 @@ class BehaviorIncrementColumn {
     }
     
     onStateEntered() {
+      // the column skip is max 3
       this.active = true
-      this.targets.currentCol += 1
       this.targets.colDone = false
       this.active = false
     }
