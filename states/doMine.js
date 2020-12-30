@@ -12,6 +12,7 @@ const BehaviorEatMelon = require('../behaviors/eatMelon');
 const BehaviorFightMobs = require('../behaviors/fightMobs');
 const BehaviorMoveTo = require('../behaviors/moveTo');
 const BehaviorMineBlock = require('../behaviors/digBlock');
+const BehaviorCollectItems = require('../behaviors/collectItems');
   
 // mine items is the sub state machine which handles the mining process
 // this state ensures that the bot will fight off any mobs
@@ -27,6 +28,7 @@ function createDoMineState(bot, movements, targets) {
   const fightMobs = new BehaviorFightMobs(bot, targets)
   const mineBlock1 = new BehaviorMineBlock(bot, targets)
   const mineBlock2 = new BehaviorMineBlock(bot, targets)
+  const collectItems = new BehaviorCollectItems(bot, movements, targets)
  
   const self = this
 
@@ -129,17 +131,25 @@ function createDoMineState(bot, movements, targets) {
     
     new StateTransition({
         parent: mineBlock2,
+        child: collectItems,
+        name: "collect items",
+        shouldTransition: () => mineBlock2.isFinished(),
+        onTransition: () => console.log("mineItems.collect_items"),
+    }),
+    
+    new StateTransition({
+        parent: collectItems,
         child: idleEnd,
         name: "no tools",
-        shouldTransition: () => mineBlock2.isFinished() && !bot.hasTools(),
+        shouldTransition: () => collectItems.isFinished() && !bot.hasTools(),
         onTransition: () => console.log("mineItems.no_tools"),
     }),
     
     new StateTransition({
-        parent: mineBlock2,
+        parent: collectItems,
         child: mineNearbyItems,
         name: "mine nearby",
-        shouldTransition: () => mineBlock2.isFinished(),
+        shouldTransition: () => collectItems.isFinished(),
         onTransition: () => console.log("mineItems.mine_nearby"),
     }),
     

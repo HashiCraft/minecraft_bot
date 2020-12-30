@@ -13,24 +13,15 @@ class BehaviorMineBlock  {
 
   onStateEntered () {
     this.active = true
+    this.currentCol = 0
 
     if (this.targets.position == null) {
       this.active = false
       return
     }
 
-
     // mine all the columns
-    for(var c = 0; c < this.targets.mineCols; c++)  {
-      var pos
-      if(this.targets.mineDirection === 'x') {
-        pos = new Vec3(this.targets.position.x += this.targets.mineDirection, this.targets.position.y,  this.targets.position.z)
-      } else {
-        pos = new Vec3(this.targets.position.x, this.targets.position.y,  this.targets.position.z  += this.targets.mineDirection)
-      }
-
-      this.breakBlock(pos)
-    }
+    this.breakBlock(this.targets.position)
   }
 
   onStateExited() {
@@ -45,23 +36,37 @@ class BehaviorMineBlock  {
     const self = this
 
     if (block == null || !this.bot.canDigBlock(block) || block.name == 'air') {
-      console.log(`[MineBlock] Cannot mine target block '${block?.displayName ?? 'undefined'}'!. Skipping.`)
+      //console.log(`[MineBlock] Cannot mine target block '${block?.displayName ?? 'undefined'}'!. Skipping.`)
+      
+      // do we need to increment the column 
+      this.currentCol ++
+      if(this.currentCol >= this.targets.mineCols) {
+        this.active = false
+        return
+      }
 
-      this.active = false
+      // mine the next column
+      if(this.targets.mineAxis === 'x') {
+        pos = new Vec3(this.targets.position.x, this.targets.position.y,  this.targets.position.z - (this.targets.mineDirection * this.currentCol)) 
+      } else {
+        pos = new Vec3(this.targets.position.x - (this.targets.mineDirection * this.currentCol), this.targets.position.y,  this.targets.position.z)
+      }
+
+      this.breakBlock(pos)
       return
     }
 
-    console.log(`[MineBlock] Breaking block '${block.displayName}' at ${pos.toString()}`)
+    //console.log(`[MineBlock] Breaking block '${block.displayName}' at ${pos.toString()}`)
 
     const tool = this.getBestTool(block)
-    console.log('equipping tool', tool)
+    //console.log('equipping tool', tool)
 
     if (tool != null) {
       self.bot.equip(tool, 'hand').then(() => {
         self.bot.dig(block).then(() => {
           //  gravel might have dropped in place of the block
           self.timer = setTimeout(() => {
-            self.breakBlock()
+            self.breakBlock(pos)
           }, 300)
         }).catch(err => {
           self.active = false
@@ -75,7 +80,7 @@ class BehaviorMineBlock  {
       self.bot.dig(block).then(() => {
         //  gravel might have dropped in place of the block
         self.timer = setTimeout(() => {
-          self.breakBlock()
+          self.breakBlock(pos)
         }, 300)
       }).catch(err => {
         self.active = false
