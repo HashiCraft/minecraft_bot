@@ -18,6 +18,16 @@ npm install
 node run . --start
 ```
 
+## Authentication
+
+Requests to the API need to be authenticated to set the environment variable `API_KEY` with the
+value you would like to use in the `authorization` header.
+
+```
+export API_KEY='password'
+curl -H 'authorization: bearer password' localhost:3000/health 
+```
+
 ## Commands
 
 You can command the bot to perform certain tasks by sending it an in game whisper

@@ -1,4 +1,5 @@
 const Miner = require('./miner')
+const auth = require('./auth')
 
 var tty = require("tty");
 const nodeFlags = require('node-flag')
@@ -43,6 +44,7 @@ process.on('SIGINT', function() {
 
 
 app.use(bodyParser.json())
+app.use(auth)
 
 app.get('/health', (req, res) => {
   res.send('OK')
