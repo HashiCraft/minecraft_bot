@@ -25,7 +25,7 @@ function createDoMineState(bot, movements, targets) {
   const setMiningTarget = new BehaviorSetMiningTarget(bot, targets)
   const dropTorch = new BehaviorDropTorch(bot, targets)
   const eatMelon = new BehaviorEatMelon(bot, targets)
-  const fightMobs = new BehaviorFightMobs(bot, targets)
+ // const fightMobs = new BehaviorFightMobs(bot, targets)
   const mineBlock1 = new BehaviorMineBlock(bot, targets)
   const mineBlock2 = new BehaviorMineBlock(bot, targets)
   const collectItems = new BehaviorCollectItems(bot, movements, targets)
@@ -42,36 +42,36 @@ function createDoMineState(bot, movements, targets) {
     }),
     
     // fight mobs
-    new StateTransition({
-        parent: idle,
-        child: fightMobs,
-        shouldTransition: () => bot.inDanger(),
-        onTransition: () => console.log("mineItems.fight_mobs"),
-    }),
-    
-    new StateTransition({
-        parent: fightMobs,
-        child: idle,
-        shouldTransition: () => fightMobs.isFinished(),
-        onTransition: () => console.log("mineItems.idle"),
-    }),
+    //new StateTransition({
+    //    parent: idle,
+    //    child: fightMobs,
+    //    shouldTransition: () => bot.inDanger(),
+    //    onTransition: () => console.log("mineItems.fight_mobs"),
+    //}),
+    //
+    //new StateTransition({
+    //    parent: fightMobs,
+    //    child: idle,
+    //    shouldTransition: () => fightMobs.isFinished(),
+    //    onTransition: () => console.log("mineItems.idle"),
+    //}),
     // end fight
     
     // or eat
-    new StateTransition({
-        parent: idle,
-        child: eatMelon,
-        name: "eat some tasty melon",
-        shouldTransition: () => bot.isHungry(),
-        onTransition: () => console.log("mineItems.eat_melon"),
-    }),
-    
-    new StateTransition({
-        parent: eatMelon,
-        child: idle,
-        shouldTransition: () => eatMelon.isFinished(),
-        onTransition: () => console.log("mineItems.idle"),
-    }),
+//    new StateTransition({
+//        parent: idle,
+//        child: eatMelon,
+//        name: "eat some tasty melon",
+//        shouldTransition: () => bot.isHungry(),
+//        onTransition: () => console.log("mineItems.eat_melon"),
+//    }),
+//    
+//    new StateTransition({
+//        parent: eatMelon,
+//        child: idle,
+//        shouldTransition: () => eatMelon.isFinished(),
+//        onTransition: () => console.log("mineItems.idle"),
+//    }),
     // end eat
 
     // mine - default

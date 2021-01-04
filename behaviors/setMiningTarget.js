@@ -57,7 +57,7 @@ class BehaviorSetMiningTarget {
       }
       
       if (xDistCurAbs <= 0 && zDistCurAbs <= 0) {
-        console.log("Cant move any further, all done")
+        //console.log("Cant move any further, all done")
         
         // we can not move set the position to 0
         this.targets.colDone = true
@@ -94,7 +94,7 @@ class BehaviorSetMiningTarget {
 
           // increment the current column
           this.targets.currentCol += incAmount
-          console.log('done',this.targets.currentCol, incAmount)
+          //console.log('done',this.targets.currentCol, incAmount)
           return
         }
       } else {
@@ -126,7 +126,7 @@ class BehaviorSetMiningTarget {
       }
 
       this.targets.position = this.targets.lastPos
-      console.log("Set new target", this.targets.lastPos, "col:", this.targets.currentCol, "incr", incDir, "xMax", xDistMaxAbs, "zMax", zDistMaxAbs)
+      //console.log("Set new target", this.targets.lastPos, "col:", this.targets.currentCol, "incr", incDir, "xMax", xDistMaxAbs, "zMax", zDistMaxAbs)
     }
 }
 

@@ -14,6 +14,8 @@ const createRootState = require('./states/root')
 const createFollowState = require('./states/doFollow')
 const createDefendState = require('./states/defendTarget')
 const createDropState = require('./states/dropItems')
+const BehaviorFight = require('./behaviors/fightMobs.js');
+const BehaviorEatMelon = require('./behaviors/eatMelon');
 
 const {
     BotStateMachine,
@@ -112,7 +114,7 @@ class Miner {
     }
     
     this.bot.isHungry = function() {
-      return (self.bot.food < 16)
+      return (self.bot.food < 18)
     }
 
     // finds an item in the inventory by name or part of name
@@ -142,13 +144,33 @@ class Miner {
     }
 
     this.bot.on('kicked', (reason, loggedIn) => {
-      console.log('Bot kicked', reason)
+      console.log('Bot kicked', reason ,loggedIn)
       this.killBot()
     })
 
     this.bot.on('login', function() {
       console.log("Logged in")
     });
+
+    this.bot.on('physicTick', () => {
+      if(this.state === common.STATE_FIGHTING || 
+        this.state === common.STATE_EAT) {
+          return
+      }
+
+      // if the bot is in danger stop what you are doing and fight
+      if(this.bot.inDanger()) {
+        console.log('In danger fighting')
+
+        this.setNewState(common.STATE_FIGHTING)
+      }
+      
+      if(this.bot.isHungry() && this.bot.hasFood()) {
+        console.log('Hungry time for a snack', this.state)
+
+        this.setNewState(common.STATE_EAT)
+      }
+    })
 
     this.bot.on('error', err => console.log('Error:', err))
 
@@ -174,8 +196,6 @@ class Miner {
     })
     
     this.bot.on('death', () => {
-      this.clearKillTimer()
-      console.log('Bot has met an unfortunate end')
     })
   }
 
@@ -251,17 +271,17 @@ class Miner {
       if (message === 'follow') {
         const target = bot.players[username].entity
         self.targets.followEntity = target
-        self.prevState = self.state
-        self.state = common.STATE_FOLLOW
         bot.chat('Whatever you say, following you ' + username)
+        
+        this.setNewState(common.STATE_FOLLOW)
       }
       
       if (message === 'defend') {
         const target = bot.players[username].entity
         self.targets.followEntity = target
-        self.prevState = self.state
-        self.state = common.STATE_DEFEND
         bot.chat('Your meat shield now am I ' + username + '?')
+        
+        this.setNewState(common.STATE_DEFEND)
       }
       
       if (message === 'stop') {
@@ -313,18 +333,19 @@ class Miner {
     })
 
     bot.on('kicked', (reason, loggedIn) => {
-      self.prevState = self.state
-      self.state = common.STATE_STOPPED
+      this.setNewState(common.STATE_STOPPED)
     })
     
-    bot.on('death', () => {
-      self.prevState = self.state
-      self.state = common.STATE_DEAD
+    this.bot.on('death', () => {
+      this.clearKillTimer()
+      console.log('Bot has met an unfortunate end, old:', this.prevState, "current: ", this.state)
       bot.chat('Ow, you can not believe how much that hurt')
+
+      this.setNewState(common.STATE_DEAD)
     })
 
     bot.on('spawn', () => {
-      console.log('Bot back again, old state:', self.prevState)
+      console.log('Bot back again, old state:', self.prevState, 'current:', self.state)
 
       if(self.state === common.STATE_DEAD) {
         bot.chat('Oh, so I die in the line of duty and you expect me to get right back to work? Wow, the compassion')
@@ -333,7 +354,6 @@ class Miner {
 
         if(self.state === common.STATE_STOPPED)
           self.setKillTimer()
-
       }
     })
 
@@ -366,8 +386,7 @@ class Miner {
 
   goto(x,y,z) {
     this.targets.position = new Vec3(parseInt(x), parseInt(y), parseInt(z))
-    this.prevState = this.state
-    this.state = common.STATE_GOTO
+    this.setNewState(common.STATE_GOTO)
   }
 
   startMining() {
@@ -378,20 +397,17 @@ class Miner {
           return false
     }
 
-    this.prevState = this.state
-    this.state = common.STATE_MINING
+    this.setNewState(common.STATE_MINING)
     return true
   }
   
   stop() {
-    this.prevState = this.state
-    this.state = common.STATE_STOPPED
+    this.setNewState(common.STATE_STOPPED)
     this.setKillTimer()
   }
 
   dropItems() {
-    this.prevState = this.state
-    this.state = common.STATE_DROP
+    this.setNewState(common.STATE_DROP)
   }
 
   getInventory() {
@@ -443,11 +459,57 @@ class Miner {
     const defend = createDefendState(this.bot, this.targets)
     const drop = createDropState(this.bot, this.targets)
     const goto = new BehaviorMoveTo(this.bot, this.targets)
-   
+    const fight = new BehaviorFight(this.bot, this.targets)
+    const eat = new BehaviorEatMelon(this.bot, this.targets)
+
     //  start the idle timer
     this.setKillTimer()
 
     const transitions = [
+      new StateTransition({
+          parent: idle,
+          child: fight,
+          name: "Start fighting",
+          shouldTransition: () => self.state === common.STATE_FIGHTING,
+          onTransition: () => {
+            self.clearKillTimer()
+            console.log("root.start_fighting")
+          }
+      }),
+
+      new StateTransition({
+          parent: fight,
+          child: idle,
+          name: "Stop fighting",
+          shouldTransition: () => fight.isFinished() || self.state !== common.STATE_FIGHTING,
+          onTransition: () => {
+            console.log("root.stop_fighting")
+            self.setPreviousState(common.STATE_FIGHTING)
+          },
+      }),
+      
+      new StateTransition({
+          parent: idle,
+          child: eat,
+          name: "Start eating",
+          shouldTransition: () => self.state === common.STATE_EAT,
+          onTransition: () => {
+            self.clearKillTimer()
+            console.log("root.start_eating")
+          }
+      }),
+
+      new StateTransition({
+          parent: eat,
+          child: idle,
+          name: "Stop eating",
+          shouldTransition: () => eat.isFinished() || self.state !== common.STATE_EAT,
+          onTransition: () => {
+            console.log("root.stop_eating")
+            self.setPreviousState(common.STATE_EAT)
+          },
+      }),
+
       // needs tools
       new StateTransition({
           parent: idle,
@@ -490,7 +552,7 @@ class Miner {
           shouldTransition: () => follow.isFinished() || self.state !== common.STATE_FOLLOW,
           onTransition: () => {
             console.log("root.stop_following")
-            self.setStoppedState(STATE_FOLLOW)
+            self.setStoppedState(common.STATE_FOLLOW)
           },
       }),
       // end follow
@@ -588,7 +650,33 @@ class Miner {
       this.setKillTimer()
     }
   }
+  
+  setPreviousState(myState) {
+    if(this.state == myState) {
+      // do not set the previous state if the 
+      this.state = this.prevState
+      this.prevState = myState 
+      this.setKillTimer()
+    }
+  }
 
+  setNewState(myState) {
+    console.log('set new state to:', myState, 'old:', this.prevState, 'current:', this.state)
+    const oldState = this.state
+   
+    // set the new state
+    this.state = myState
+ 
+    // if we are not changing state do nothing
+    if(oldState === myState)
+      return
+ 
+    // death, fighting and eating are temporary states and should not override the old previous state
+    if(oldState === common.STATE_FIGHTING || oldState === common.STATE_EAT || oldState === common.STATE_DEAD)
+      return
+
+    this.prevState = oldState
+  }
 }
 
 module.exports = Miner;

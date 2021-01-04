@@ -33,37 +33,39 @@ class BehaviorEatMelon {
         this.active = false
         return
       }
-
-      this.eatMelon(food)
-
-      const self = this
-      this.timeout = setTimeout(() => {
-        console.log('Timeout twisting my melon man')
-        self.active = false
-      }, 30000)
+      
+      this.eatFood(food)
     }
     
     onStateExited() {
       this.cancelled = true
     }
 
-    eatMelon(food) {
-      const self = this
+    eatFood(food) {
+      if(!food) {
+        this.done()
+        return
+      }
+
       this.bot.equip(food, 'hand', (error) => {
         if (error) {
           console.log('error equiping food', error)
-          self.done()
+          this.done()
           return
         }
 
-        self.bot.consume((error) => {
+        this.bot.consume((error) => {
           if (error) {
             console.log('error eating my food', error)
           }
 
           console.log('munch munch, nice ' + food.name)
-          self.done()
-          return
+          
+          if(this.bot.food !== 20) {
+            this.eatFood(this.bot.getFood())
+          } else {
+            this.done()
+          }
         })
 
       })
@@ -71,7 +73,6 @@ class BehaviorEatMelon {
 
     done() {
       this.active = false
-      clearTimeout(this.timeout)
     }
 
     isFinished() {

@@ -112,17 +112,16 @@ class BehaviorDropTorch {
       }
 
       // place the torch behind us
-      const self = this
       this.bot.unequip('hand', () => {
-        self.bot.equip(torch, 'hand', (error) => {
+        this.bot.equip(torch, 'hand', (error) => {
           if (error) {
-            self.active = false
+            this.active = false
             return
           }
 
-          self.bot.placeBlock(destination, new Vec3(0,1,0), () => {
+          this.bot.placeBlock(destination, new Vec3(0,1,0), () => {
             console.log("Added a torch", destination.position, direction)
-            self.active = false
+            this.active = false
           })
         })
       })

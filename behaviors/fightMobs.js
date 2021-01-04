@@ -28,7 +28,7 @@ class BehaviorFightMobs {
           if(!self.active)
             return
 
-          console.log('Stopped attacking')
+          //console.log('Stopped attacking')
           self.checkMobAndFight()
         })
         
@@ -39,7 +39,7 @@ class BehaviorFightMobs {
           if(!self.active)
             return
 
-          console.log('Started attacking')
+          //console.log('Started attacking')
         })
 
         this.bot.on('death', () => {
@@ -100,13 +100,13 @@ class BehaviorFightMobs {
       this.bot.unequip('hand', () => {
         self.bot.equip(sword, 'hand', (error) => {
           if(error) {
-            console.log('Unable to equip sword')
+            console.log('Unable to equip sword', error)
           }
       
           self.bot.unequip('off-hand', () => {
             self.bot.equip(shield, 'off-hand', (error) => {
               if(error) {
-                console.log('Unable to equip shield')
+                console.log('Unable to equip shield', error)
               }
 
               this.bot.pvp.attack(mob)

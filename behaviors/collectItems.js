@@ -28,7 +28,7 @@ class BehaviorCollectItems {
 
         //console.log(r)
         if (r.status === 'noPath') { 
-          console.log('[MoveTo] No path to target!') 
+          //console.log('[MoveTo] No path to target!') 
           this.cancel()
         }
       })
@@ -37,7 +37,7 @@ class BehaviorCollectItems {
         if(!this.active)
           return
 
-        console.log('reached')
+        //console.log('reached')
         this.cancel()
         //this.bot.pathfinder.setGoal(null)
 
@@ -67,7 +67,7 @@ class BehaviorCollectItems {
         return true
       })
 
-      console.log(e)
+      //console.log(e)
       if(!e) {
         this.cancel()
         return
@@ -82,7 +82,7 @@ class BehaviorCollectItems {
 
       this.bot.pathfinder.setMovements(this.movements)
       this.bot.pathfinder.setGoal(goal, false)
-      console.log('goal set', goal, this.bot.entity.position)
+      //console.log('goal set', goal, this.bot.entity.position)
     }
 
     onStateExit() {

@@ -87,8 +87,8 @@ class BehaviorMineNearbyItems {
 
       this.bot.equip(pickaxe, 'hand', (error) => {
           if(error) {
-            console.log('Unable to equip pickaxe')
-            self.active = false
+            console.log('Unable to equip pickaxe', error)
+            this.active = false
             return 
           }
 
