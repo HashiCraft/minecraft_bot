@@ -8,8 +8,6 @@ const {
 const BehaviorMineNearbyItems = require('../behaviors/findNearbyItems');
 const BehaviorSetMiningTarget = require('../behaviors/setMiningTarget');
 const BehaviorDropTorch = require('../behaviors/dropTorch');
-const BehaviorEatMelon = require('../behaviors/eatMelon');
-const BehaviorFightMobs = require('../behaviors/fightMobs');
 const BehaviorMoveTo = require('../behaviors/moveTo');
 const BehaviorMineBlock = require('../behaviors/digBlock');
 const BehaviorCollectItems = require('../behaviors/collectItems');
@@ -24,10 +22,9 @@ function createDoMineState(bot, movements, targets) {
   const mineNearbyItems = new BehaviorMineNearbyItems(bot, targets)
   const setMiningTarget = new BehaviorSetMiningTarget(bot, targets)
   const dropTorch = new BehaviorDropTorch(bot, targets)
-  const eatMelon = new BehaviorEatMelon(bot, targets)
- // const fightMobs = new BehaviorFightMobs(bot, targets)
   const mineBlock1 = new BehaviorMineBlock(bot, targets)
   const mineBlock2 = new BehaviorMineBlock(bot, targets)
+  const mineBlock3 = new BehaviorMineBlock(bot, targets)
   const collectItems = new BehaviorCollectItems(bot, movements, targets)
  
   const self = this
@@ -40,39 +37,6 @@ function createDoMineState(bot, movements, targets) {
         shouldTransition: () => !bot.hasTools(),
         onTransition: () => console.log("mineItems.no_tools"),
     }),
-    
-    // fight mobs
-    //new StateTransition({
-    //    parent: idle,
-    //    child: fightMobs,
-    //    shouldTransition: () => bot.inDanger(),
-    //    onTransition: () => console.log("mineItems.fight_mobs"),
-    //}),
-    //
-    //new StateTransition({
-    //    parent: fightMobs,
-    //    child: idle,
-    //    shouldTransition: () => fightMobs.isFinished(),
-    //    onTransition: () => console.log("mineItems.idle"),
-    //}),
-    // end fight
-    
-    // or eat
-//    new StateTransition({
-//        parent: idle,
-//        child: eatMelon,
-//        name: "eat some tasty melon",
-//        shouldTransition: () => bot.isHungry(),
-//        onTransition: () => console.log("mineItems.eat_melon"),
-//    }),
-//    
-//    new StateTransition({
-//        parent: eatMelon,
-//        child: idle,
-//        shouldTransition: () => eatMelon.isFinished(),
-//        onTransition: () => console.log("mineItems.idle"),
-//    }),
-    // end eat
 
     // mine - default
     new StateTransition({
@@ -106,7 +70,7 @@ function createDoMineState(bot, movements, targets) {
         shouldTransition: () => moveMineState.isFinished(),
         onTransition: () => {
           console.log("mineItems.mine_block_1")
-          targets.position = targets.mineBlocks[1]
+          targets.position = targets.mineBlocks[2]
         }
     }),
     
@@ -125,15 +89,34 @@ function createDoMineState(bot, movements, targets) {
         shouldTransition: () => mineBlock1.isFinished(),
         onTransition: () => {
           console.log("mineItems.mine_block_2")
-          targets.position = targets.mineBlocks[0]
+          targets.position = targets.mineBlocks[1]
         }
     }),
     
     new StateTransition({
         parent: mineBlock2,
+        child: idleEnd,
+        name: "no tools",
+        shouldTransition: () => mineBlock2.isFinished() && !bot.hasTools(),
+        onTransition: () => console.log("mineItems.no_tools"),
+    }),
+    
+    new StateTransition({
+        parent: mineBlock2,
+        child: mineBlock3,
+        name: "mine block 3",
+        shouldTransition: () => mineBlock2.isFinished(),
+        onTransition: () => {
+          console.log("mineItems.mine_block_3")
+          targets.position = targets.mineBlocks[0]
+        }
+    }),
+    
+    new StateTransition({
+        parent: mineBlock3,
         child: collectItems,
         name: "collect items",
-        shouldTransition: () => mineBlock2.isFinished(),
+        shouldTransition: () => mineBlock3.isFinished(),
         onTransition: () => console.log("mineItems.collect_items"),
     }),
     

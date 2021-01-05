@@ -80,6 +80,7 @@ class BehaviorSetMiningTarget {
         this.targets.mineBlocks = []
         this.targets.mineBlocks.push(new Vec3(this.targets.lastPos.x + incr, this.targets.lastPos.y, this.targets.lastPos.z))
         this.targets.mineBlocks.push(new Vec3(this.targets.lastPos.x + incr, this.targets.lastPos.y + 1 , this.targets.lastPos.z))
+        this.targets.mineBlocks.push(new Vec3(this.targets.lastPos.x + incr, this.targets.lastPos.y + 2 , this.targets.lastPos.z))
           
         const incAmount = (zDistCurAbs > 3) ? 3 : zDistCurAbs
         this.targets.mineCols = incAmount // number of columns to mine
@@ -107,6 +108,7 @@ class BehaviorSetMiningTarget {
         this.targets.mineBlocks = []
         this.targets.mineBlocks.push(new Vec3(this.targets.lastPos.x, this.targets.lastPos.y, this.targets.lastPos.z + incr))
         this.targets.mineBlocks.push(new Vec3(this.targets.lastPos.x, this.targets.lastPos.y + 1 , this.targets.lastPos.z + incr))
+        this.targets.mineBlocks.push(new Vec3(this.targets.lastPos.x, this.targets.lastPos.y + 2 , this.targets.lastPos.z + incr))
         
         const incAmount = (xDistCurAbs > 3) ? 3 : xDistCurAbs
         this.targets.mineCols = incAmount

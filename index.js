@@ -25,22 +25,36 @@ const rootSettings = {
 const app = express()
 const server = http.createServer(app)
 
-const miner = new Miner()
+const bots = new Map()
 
 // graceful shutdown
 process.on('SIGINT', function() {
-  console.log("Killing the bot");
-  var t = setTimeout(() => process.exit(), 5000)
-
-  miner.killBot(() => {
-    clearTimeout(t)
-    process.exit();
-  })
-
   server.close(() => {
     console.log('HTTP server closed')
   })
-});
+
+  var t = setTimeout(() => process.exit(), 5000)
+  var n = 0
+ 
+  // watch for all bots to be killed and exit
+  setInterval(() => {
+    if(n === 0){
+      clearTimeout(t)
+      process.exit()
+    }
+  },200)
+
+  console.log("Killing the bots");
+  bots.forEach((v,id) => {
+    console.log('killing bot', id)
+    n++
+
+    v.killBot(() => {
+      n++
+    })
+  })
+
+})
 
 
 app.use(bodyParser.json())
@@ -67,29 +81,42 @@ app.post('/bot', (req, res) => {
     }
   }
 
-  miner.createBot(s)
+  const miner = new Miner()
+  // add the bot to the collection
+  const id = uuidv4()
+  bots.set(id, miner)
 
-  res.send(
-    {
-      id: uuidv4(),
-      message: 'bot started'
-    }
-  )
+  miner.createBot(s, () => {
+    res.send(
+      {
+        id: id,
+        message: 'bot started'
+      }
+    )
+  })
 })
 
 app.delete('/bot/:id', (req, res) => {
-  miner.killBot()
+  const id = req.params.id
+  if(notExist(id, res))
+    return
+
+  bots.get(id).killBot()
   res.send(
     {
-    id: req.params.id,
+    id: id,
     message: 'bot killed'
     }
   )
+
+  bots.delete(id)
 })
 
 app.post('/bot/:id/configure',(req, res) => {
   const d = req.body
-  console.log(d)
+  const id = req.params.id
+  if(notExist(id, res))
+    return
 
   // process the mineStart
   const ms = d.mine_start
@@ -151,21 +178,25 @@ app.post('/bot/:id/configure',(req, res) => {
     return
   }
 
-  miner.setMineStart(msParts[0], msParts[1], msParts[2])
-  miner.setMineEnd(meParts[0], meParts[1], meParts[2])
-  miner.setDropOffChestLocation(dcParts[0], dcParts[1], dcParts[2])
-  miner.setEquipmentChestLocation(tcParts[0], tcParts[1], tcParts[2])
+  bots.get(id).setMineStart(msParts[0], msParts[1], msParts[2])
+  bots.get(id).setMineEnd(meParts[0], meParts[1], meParts[2])
+  bots.get(id).setDropOffChestLocation(dcParts[0], dcParts[1], dcParts[2])
+  bots.get(id).setEquipmentChestLocation(tcParts[0], tcParts[1], tcParts[2])
 
   res.send(
     {
-    id: req.params.id,
+    id: id,
     message: 'bot configured'
     }
   )
 })
 
 app.get('/bot/:id/start',(req, res) => {
-  miner.startMining()
+  const id = req.params.id
+  if(notExist(id, res))
+    return
+  
+  bots.get(id).startMining()
   res.send(
     {
     id: req.params.id,
@@ -185,7 +216,6 @@ app.get('/bot/:id/stop',(req, res) => {
 })
 
 app.get('/bot/:id/status',(req, res) => {
-  miner.startMining()
   res.send(
     {
     id: req.params.id,
@@ -204,6 +234,19 @@ app.get('/bot/:id/inventory',(req, res) => {
     }
   )
 })
+
+// checks if a bot exists if not writes a 404
+function notExist(id, res) {
+  if(bots.has(id))
+    return false
+
+  res.status(404)
+  res.send({message: 'Bot with id ' + id + ' does not exist'})
+
+  console.log('Bot',id,'does not exist')
+  return true
+}
+
 
 // should we autostart the bot?
 if(nodeFlags.isset('start')) {

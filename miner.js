@@ -30,7 +30,7 @@ const common = require('./common')
 class Miner {
   constructor() {}
 
-   async createBot(settings) {
+   async createBot(settings, callback) {
     this.settings = settings
     this.bot = mineflayer.createBot(settings)
 
@@ -193,6 +193,9 @@ class Miner {
       }
 
       self.bot.chat("Oh, what do you clowns need now?")
+
+      if(callback)
+        callback()
     })
     
     this.bot.on('death', () => {
