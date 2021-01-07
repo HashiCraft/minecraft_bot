@@ -1,5 +1,3 @@
-const Vec3 = require('vec3').Vec3
-
 /**
  * This behavior will attempt to break the target block. If the target block
  * could not be mined for any reason, this behavior fails silently.
@@ -13,15 +11,14 @@ class BehaviorMineBlock  {
 
   onStateEntered () {
     this.active = true
-    this.currentCol = 0
 
-    if (this.targets.position == null) {
+    if (!this.targets.mineBlocks || this.targets.mineBlocks.length === 0) {
       this.active = false
       return
     }
 
     // mine all the columns
-    this.breakBlock(this.targets.position)
+    this.breakBlock()
   }
 
   onStateExited() {
@@ -31,62 +28,53 @@ class BehaviorMineBlock  {
     } 
   }
 
-  breakBlock(pos) {
-    const block = this.bot.blockAt(pos)
-    const self = this
-
-    if (block == null || !this.bot.canDigBlock(block) || block.name == 'air') {
-      //console.log(`[MineBlock] Cannot mine target block '${block?.displayName ?? 'undefined'}'!. Skipping.`)
-      
-      // do we need to increment the column 
-      this.currentCol ++
-      if(this.currentCol >= this.targets.mineCols) {
-        this.active = false
-        return
-      }
-
-      // mine the next column
-      if(this.targets.mineAxis === 'x') {
-        pos = new Vec3(this.targets.position.x, this.targets.position.y,  this.targets.position.z - (this.targets.mineDirection * this.currentCol)) 
-      } else {
-        pos = new Vec3(this.targets.position.x - (this.targets.mineDirection * this.currentCol), this.targets.position.y,  this.targets.position.z)
-      }
-
-      this.breakBlock(pos)
+  breakBlock() {
+    const pos = this.targets.mineBlocks.pop()
+    if(!pos) {
+      console.log('no blocks left to break','broken so far',this.targets.blocksBroken)
+      this.active = false
       return
     }
 
-    //console.log(`[MineBlock] Breaking block '${block.displayName}' at ${pos.toString()}`)
+    const block = this.bot.blockAt(pos)
 
-    const tool = this.getBestTool(block)
-    //console.log('equipping tool', tool)
+    if (block == null || !this.bot.canDigBlock(block) || block.name == 'air') {
+      console.log(`[MineBlock] Cannot mine target block '${block?.displayName ?? 'undefined'}'!. Skipping.`, 'at pos', pos)
 
-    if (tool != null) {
-      self.bot.equip(tool, 'hand').then(() => {
-        self.bot.dig(block).then(() => {
-          //  gravel might have dropped in place of the block
-          self.timer = setTimeout(() => {
-            self.breakBlock(pos)
-          }, 300)
-        }).catch(err => {
-          self.active = false
-          console.log(err)
-        })
-      }).catch(err => {
-        self.active = false
-        console.log(err)
-      })
-    } else {
-      self.bot.dig(block).then(() => {
-        //  gravel might have dropped in place of the block
-        self.timer = setTimeout(() => {
-          self.breakBlock(pos)
-        }, 300)
-      }).catch(err => {
-        self.active = false
-        console.log(err)
-      })
+      // try the next block in the list
+      this.breakBlock()
+      return
     }
+
+    console.log(`[MineBlock] Breaking block '${block.displayName}' at ${pos.toString()}`)
+    
+    const tool = this.getBestTool(block)
+    if (!tool) {
+      // no tool to equip
+      this.digBlock(block)
+      return
+    }
+
+    // equip the tool then dig
+    this.bot.equip(tool, 'hand').then(() => {
+      this.digBlock(block)
+    }).catch(err => {
+      this.active = false
+      console.log(err)
+    })
+  }
+
+  digBlock(block) {
+    // increase the number of blocks broken
+    this.targets.blocksBroken ++
+
+    this.bot.dig(block).then(() => {
+      // mine the next block
+      this.breakBlock()
+    }).catch(err => {
+      this.active = false
+      console.log(err)
+    })
   }
 
   getBestTool (block)  {

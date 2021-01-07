@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "mineflayer": "^2.37.0",
+    "mineflayer": "^2.40.1",
     "mineflayer-pathfinder": "git+https://github.com/nicholasjackson/mineflayer-pathfinder.git#f-add-navigable-doors",
     "mineflayer-pvp": "^1.0.2",
     "mineflayer-statemachine": "^1.5.1",

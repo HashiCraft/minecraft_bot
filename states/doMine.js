@@ -5,6 +5,8 @@ const {
     NestedStateMachine,
 } = require('mineflayer-statemachine');
 
+const common = require('../common')
+
 const BehaviorMineNearbyItems = require('../behaviors/findNearbyItems');
 const BehaviorSetMiningTarget = require('../behaviors/setMiningTarget');
 const BehaviorDropTorch = require('../behaviors/dropTorch');
@@ -22,13 +24,9 @@ function createDoMineState(bot, movements, targets) {
   const mineNearbyItems = new BehaviorMineNearbyItems(bot, targets)
   const setMiningTarget = new BehaviorSetMiningTarget(bot, targets)
   const dropTorch = new BehaviorDropTorch(bot, targets)
-  const mineBlock1 = new BehaviorMineBlock(bot, targets)
-  const mineBlock2 = new BehaviorMineBlock(bot, targets)
-  const mineBlock3 = new BehaviorMineBlock(bot, targets)
+  const mineBlocks = new BehaviorMineBlock(bot, targets)
   const collectItems = new BehaviorCollectItems(bot, movements, targets)
  
-  const self = this
-
   const transitions = [
     // check our pick axe is still ok, if not fetch a new one
     new StateTransition({
@@ -36,6 +34,17 @@ function createDoMineState(bot, movements, targets) {
         child: idleEnd,
         shouldTransition: () => !bot.hasTools(),
         onTransition: () => console.log("mineItems.no_tools"),
+    }),
+    
+    // have we mined enough blocks and should drop the items
+    new StateTransition({
+        parent: idle,
+        child: idleEnd,
+        shouldTransition: () => targets.blocksBroken >= common.blocksBeforeDrop,
+        onTransition: () => {
+          console.log("mineItems.drop_items")
+          targets.blocksBroken = 0 // reset blocks broken
+        }
     }),
 
     // mine - default
@@ -65,58 +74,25 @@ function createDoMineState(bot, movements, targets) {
     
     new StateTransition({
         parent: moveMineState,
-        child: mineBlock1,
-        name: "mine block 1",
+        child: mineBlocks,
+        name: "mine blocks",
         shouldTransition: () => moveMineState.isFinished(),
-        onTransition: () => {
-          console.log("mineItems.mine_block_1")
-          targets.position = targets.mineBlocks[2]
-        }
+        onTransition: () => console.log("mineItems.mine_blocks")
     }),
     
     new StateTransition({
-        parent: mineBlock1,
+        parent: mineBlocks,
         child: idleEnd,
         name: "no tools",
-        shouldTransition: () => mineBlock1.isFinished() && !bot.hasTools(),
+        shouldTransition: () => mineBlocks.isFinished() && !bot.hasTools(),
         onTransition: () => console.log("mineItems.no_tools"),
     }),
     
     new StateTransition({
-        parent: mineBlock1,
-        child: mineBlock2,
-        name: "mine block 2",
-        shouldTransition: () => mineBlock1.isFinished(),
-        onTransition: () => {
-          console.log("mineItems.mine_block_2")
-          targets.position = targets.mineBlocks[1]
-        }
-    }),
-    
-    new StateTransition({
-        parent: mineBlock2,
-        child: idleEnd,
-        name: "no tools",
-        shouldTransition: () => mineBlock2.isFinished() && !bot.hasTools(),
-        onTransition: () => console.log("mineItems.no_tools"),
-    }),
-    
-    new StateTransition({
-        parent: mineBlock2,
-        child: mineBlock3,
-        name: "mine block 3",
-        shouldTransition: () => mineBlock2.isFinished(),
-        onTransition: () => {
-          console.log("mineItems.mine_block_3")
-          targets.position = targets.mineBlocks[0]
-        }
-    }),
-    
-    new StateTransition({
-        parent: mineBlock3,
+        parent: mineBlocks,
         child: collectItems,
         name: "collect items",
-        shouldTransition: () => mineBlock3.isFinished(),
+        shouldTransition: () => mineBlocks.isFinished(),
         onTransition: () => console.log("mineItems.collect_items"),
     }),
     

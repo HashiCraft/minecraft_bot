@@ -1,8 +1,5 @@
 const Vec3 = require('vec3').Vec3
 
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.BehaviorDropTorch = void 0;
 /**
  * This behavior will attempt to interact with the target block. If the target
  * block could not be interacted with for any reason, this behavior fails silently.
@@ -106,23 +103,21 @@ class BehaviorDropTorch {
       this.targets.lastTorchDrop =  destPos 
 
       var destination = this.bot.blockAt(destPos)
-      if(!destination) {
+      if(!destination || destination.name === 'air') {
         this.active = false
         return
       }
 
       // place the torch behind us
-      this.bot.unequip('hand', () => {
-        this.bot.equip(torch, 'hand', (error) => {
-          if (error) {
-            this.active = false
-            return
-          }
+      this.bot.equip(torch, 'hand', (error) => {
+        if (error) {
+          this.active = false
+          return
+        }
 
-          this.bot.placeBlock(destination, new Vec3(0,1,0), () => {
-            console.log("Added a torch", destination.position, direction)
-            this.active = false
-          })
+        this.bot.placeBlock(destination, new Vec3(0,1,0), () => {
+          console.log("Added a torch", destination.position, direction)
+          this.active = false
         })
       })
     }

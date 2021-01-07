@@ -251,6 +251,10 @@ function notExist(id, res) {
 // should we autostart the bot?
 if(nodeFlags.isset('start')) {
   console.log('Starting bot', rootSettings)
+  const miner = new Miner()
+  // add the bot to the collection
+  const id = uuidv4()
+  bots.set(id, miner)
   miner.createBot(rootSettings)
 }
 

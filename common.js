@@ -56,4 +56,7 @@ common.foodTypes.forEach((ft) => {
   common.equipmentList.push({name: ft, required: false, count: 20, type: 'food'})
 })
 
+// number of blocks the bot should break before dropping inventory in the chest
+common.blocksBeforeDrop = 128
+
 module.exports = common;

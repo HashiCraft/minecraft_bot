@@ -96,23 +96,20 @@ class BehaviorFightMobs {
     }
     
     equipWeaponsAndFight(mob, sword, shield) {
-      const self = this
-      this.bot.unequip('hand', () => {
-        self.bot.equip(sword, 'hand', (error) => {
-          if(error) {
-            console.log('Unable to equip sword', error)
-          }
-      
-          self.bot.unequip('off-hand', () => {
-            self.bot.equip(shield, 'off-hand', (error) => {
-              if(error) {
-                console.log('Unable to equip shield', error)
-              }
+      this.bot.equip(sword, 'hand', (error) => {
+        if(error) {
+          console.log('Unable to equip sword', error)
+        }
+     
+        if(shield) {
+          this.bot.equip(shield, 'off-hand', (error) => {
+            if(error) {
+              console.log('Unable to equip shield', error)
+            }
 
-              this.bot.pvp.attack(mob)
-            })
+            this.bot.pvp.attack(mob)
           })
-        })
+        }
       })
     }
     

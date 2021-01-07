@@ -27,6 +27,8 @@ const {
 
 const common = require('./common')
 
+require('events').EventEmitter.defaultMaxListeners = 50;
+
 class Miner {
   constructor() {}
 
@@ -42,13 +44,13 @@ class Miner {
     this.targets = {
       colDone: false,
       allDone: false,
-      currentCol: 0,
       dropOffChestLocation: null,
       equipmentChestLocation: null,
       mineStart: null,
       mineEnd: null,
       lastPos: new Vec3(1,1,1),
       followEntity: null,
+      blocksBroken: 0,
     };
 
     const self = this
@@ -367,8 +369,8 @@ class Miner {
     this.targets.lastPos = null
     this.targets.allDone = false
     this.targets.colDone = false
-    this.targets.currentCol = 0
     this.targets.lastTorchDrop = null
+    this.targets.blocksBroken = 0
   }
   
   setMineEnd(x,y,z) {

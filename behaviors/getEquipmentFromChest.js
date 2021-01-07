@@ -41,13 +41,18 @@ class BehaviorGetEquipmentFromChest {
       if(!chestToOpen) {
         this.bot.chat('Sorry but there is no chest here.' + this.bot.entity.position)
         console.log('Unable to open chest, chest does not exist at location', this.bot.entity.position)
+
         return
       }
 
+      console.log('opening chest')
       const chest = this.bot.openChest(chestToOpen)
+
+      console.log('waiting on callback')
       chest.on('open', function() {
         var itemList = [...common.equipmentList]
-        console.log('open',itemList)
+        
+        console.log('open', itemList)
         self.fetchItem(chest, itemList)
       })
     }
@@ -65,6 +70,7 @@ class BehaviorGetEquipmentFromChest {
       const item = items.pop()
       if (!item) {
         // no more items fetch
+        console.log('got everything')
         this.active = false
         chest.close()
         return
@@ -88,8 +94,6 @@ class BehaviorGetEquipmentFromChest {
         this.fetchItem(chest, items)
         return
       }
-
-      console.log('checking ', item)
       
       const item_id = this.getItemId(item.name, chest)
 
@@ -108,7 +112,7 @@ class BehaviorGetEquipmentFromChest {
         var itemsToFetch = chest.count(item_id, null) //12
         itemsToFetch = (itemsToFetch < item.count) ? itemsToFetch : item.count
       
-        console.log('Fetching ' + item.name + ' from chest')
+        //console.log('Fetching ' + item.name + ' from chest')
         chest.withdraw(item_id, null, itemsToFetch,function () {
           self.fetchItem(chest, items)
         })

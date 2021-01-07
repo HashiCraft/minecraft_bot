@@ -33,14 +33,14 @@ function createGetToolsState(bot, targets) {
     new StateTransition({
         parent: moveChest,
         child: getTools,
-        shouldTransition: () => moveChest.distanceToTarget() <= 3,
+        shouldTransition: () => moveChest.distanceToTarget() <= 2,
         onTransition: () => console.log("getToolsState.get_tools_from_chest"),
     }),
     
     new StateTransition({
         parent: getTools,
         child: idleEnd,
-        shouldTransition: () => targets.itemsMissing,
+        shouldTransition: () => getTools.isFinished() && targets.itemsMissing,
         onTransition: () => {
           console.log("getToolsState.itemsMissing")
 
@@ -51,7 +51,7 @@ function createGetToolsState(bot, targets) {
     new StateTransition({
         parent: getTools,
         child: idleEnd,
-        shouldTransition: () => bot.hasTools(),
+        shouldTransition: () => getTools.isFinished() && bot.hasTools(),
         onTransition: () => console.log("getToolsState.done"),
     }),
   ]

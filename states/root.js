@@ -4,7 +4,6 @@ const {
     NestedStateMachine, 
 } = require('mineflayer-statemachine');
 
-const BehaviorIncrementColumn = require('../behaviors/incrementColumn');
 const BehaviorMoveTo = require('../behaviors/moveTo');
 const createGetToolsState = require('./getTools');
 const createDoMineState = require('./doMine');
@@ -21,10 +20,8 @@ function createRootState(bot, movements, targets) {
     tools: true
   }
 
-
   const idle = new BehaviorIdle();
   const idleEnd = new BehaviorIdle();
-  const incrementColumn = new BehaviorIncrementColumn(bot, targets);
   const getToolsState = createGetToolsState(bot, targets)
   const doMineState = createDoMineState(bot, movements, targets)
   const move = new BehaviorMoveTo(bot, movements, targets)
@@ -64,36 +61,12 @@ function createRootState(bot, movements, targets) {
     }),
     // end needs tools
 
-    // got tools and no last position move to start
-    new StateTransition({
-        parent: idle,
-        child: move,
-        name: "move to start",
-        shouldTransition: () => bot.hasTools() && !targets.lastPos,
-        onTransition: () => {
-          move.setMoveTarget(targets.mineStart)
-          console.log("mine.move_start")
-        },
-    }),
-    
-    // got tools and last position move to last
-    new StateTransition({
-        parent: idle,
-        child: move,
-        name: "move to last pos",
-        shouldTransition: () => bot.hasTools() && targets.lastPos,
-        onTransition: () => {
-          move.setMoveTarget(targets.lastPos)
-          console.log("mine.move_last")
-        },
-    }),
-
     // start mining
     new StateTransition({
-        parent: move,
+        parent: idle,
         child: doMineState,
         name: "start mining",
-        shouldTransition: () => move.isFinished(),
+        shouldTransition: () => bot.hasTools(),
         onTransition: () => console.log("mine.start_mining"),
     }),
  
@@ -108,43 +81,25 @@ function createRootState(bot, movements, targets) {
         goodsDropTargets.position = targets.dropOffChestLocation
       }
     }),
-   
-    // items dropped calculate the next position
+    
     new StateTransition({
         parent: dropGoodsState,
-        child: incrementColumn,
-        name: "calculate next position",
-        shouldTransition: () =>  dropGoodsState.isFinished() && targets.colDone,
-        onTransition: () => console.log("mine.increment_column"),
-    }),
-    
-    // are we done should we drop off th items
-    new StateTransition({
-        parent: dropGoodsState,
-        child: idle,
-        name: "nothing left to mine done",
-        shouldTransition: () =>  dropGoodsState.isFinished(),
-        onTransition: () => console.log("mine.not_increment_column"),
-    }),
-    
-    // mine the next column
-    new StateTransition({
-        parent: incrementColumn,
-        child: idle,
-        name: "continue mining",
-        shouldTransition: () =>  !targets.allDone,
-        onTransition: () => console.log("mine.column_incremented_start_mining"),
-    }),
-
-    new StateTransition({
-        parent: incrementColumn,
         child: dropToolsState,
         name: "nothing left to mine dropping tools",
-        shouldTransition: () => targets.allDone,
+        shouldTransition: () => dropGoodsState.isFinished() && targets.allDone,
         onTransition: () => {
           console.log("mine.drop_items")
           toolsDropTargets.position = targets.equipmentChestLocation
         }
+    }),
+   
+    // items dropped calculate the next position
+    new StateTransition({
+        parent: dropGoodsState,
+        child: idle,
+        name: "calculate next position",
+        shouldTransition: () =>  dropGoodsState.isFinished(),
+        onTransition: () => console.log("mine.return_mining"),
     }),
     
     new StateTransition({

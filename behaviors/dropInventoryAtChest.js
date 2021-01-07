@@ -97,17 +97,15 @@ class BehaviorDropInventoryAtChest {
         return
       }
 
-      console.log("Adding " + item.count + " " + item.displayName + " to the chest")
-      const self = this
-      chest.deposit(item.type, item.metadata, item.count, function(error) {
+      //console.log("Adding " + item.count + " " + item.displayName + " to the chest")
+      chest.deposit(item.type, item.metadata, item.count, (error) => {
         if (error) {
           console.log("Error adding items to chest", error)
-          self.depositItem(chest, items)
+          this.depositItem(chest, items)
         }
 
         console.log("Added " + item.count + " " + item.displayName + " to the chest")
-
-        self.depositItem(chest, items)
+        this.depositItem(chest, items)
       })
     }
 
