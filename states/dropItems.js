@@ -29,7 +29,7 @@ function createDropItemsState(bot, targets) {
     new StateTransition({
         parent: moveChest,
         child: dropItems,
-        shouldTransition: () => moveChest.distanceToTarget() <= 2,
+        shouldTransition: () => moveChest.distanceToTarget() <= 3,
         onTransition: () => console.log("dropState.dropping_items"),
     }),
     

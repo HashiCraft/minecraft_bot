@@ -48,7 +48,7 @@ class BehaviorDropInventoryAtChest {
       this.timeout = setTimeout(() => {
         console.log("Timeout waiting for dropping items")
         self.active = false
-      },10000)
+      },30000)
 
       const chest = this.bot.openChest(chestToOpen)
       const items = this.bot.inventory.items()
@@ -74,6 +74,7 @@ class BehaviorDropInventoryAtChest {
     done(chest) {
       clearTimeout(this.timeout)
       this.active = false
+
       if (!this.chestClosed)
         chest.close()
     }

@@ -33,7 +33,13 @@ class BehaviorEatMelon {
         this.active = false
         return
       }
-      
+    
+      // set a timeout for this operation
+      this.timer = setTimeout(() => {
+        console.log('eat timeout')
+        this.active = false
+      }, 30000)
+
       this.eatFood(food)
     }
     
@@ -57,15 +63,21 @@ class BehaviorEatMelon {
         this.bot.consume((error) => {
           if (error) {
             console.log('error eating my food', error)
+            this.done()
+            return
           }
 
           console.log('munch munch, nice ' + food.name)
-          
-          if(this.bot.food !== 20) {
-            this.eatFood(this.bot.getFood())
-          } else {
-            this.done()
-          }
+
+          // wait 5 seconds and check if we still need to eat
+          setTimeout(() => {
+            if(this.bot.food !== 20) {
+              this.eatFood(this.bot.getFood())
+            } else {
+              this.done()
+            }
+          }, 5000)
+
         })
 
       })
@@ -73,6 +85,7 @@ class BehaviorEatMelon {
 
     done() {
       this.active = false
+      clearTimeout(this.timer)
     }
 
     isFinished() {

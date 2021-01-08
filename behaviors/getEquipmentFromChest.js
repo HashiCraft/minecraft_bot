@@ -45,11 +45,18 @@ class BehaviorGetEquipmentFromChest {
         return
       }
 
+      this.timer = setTimeout(() => {
+        this.active = false
+        this.cancelled = true
+      }, 30000)
+
       console.log('opening chest')
       const chest = this.bot.openChest(chestToOpen)
 
       console.log('waiting on callback')
       chest.on('open', function() {
+        clearTimeout(this.timer)
+
         var itemList = [...common.equipmentList]
         
         console.log('open', itemList)
@@ -60,6 +67,7 @@ class BehaviorGetEquipmentFromChest {
     onStateExited() {
       console.log("get equipment cancelled")
       this.cancelled = true
+      clearTimeout(this.timer)
     }
 
     fetchItem(chest, items) {

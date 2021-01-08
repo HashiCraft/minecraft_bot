@@ -33,7 +33,7 @@ function createGetToolsState(bot, targets) {
     new StateTransition({
         parent: moveChest,
         child: getTools,
-        shouldTransition: () => moveChest.distanceToTarget() <= 2,
+        shouldTransition: () => moveChest.distanceToTarget() <= 3,
         onTransition: () => console.log("getToolsState.get_tools_from_chest"),
     }),
     
