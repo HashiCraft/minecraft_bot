@@ -1,10 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.BehaviorEatMelon = void 0;
-/**
- * This behavior will attempt to interact with the target block. If the target
- * block could not be interacted with for any reason, this behavior fails silently.
- */
 class BehaviorEatMelon {
     /**
      * Creates a new mine block behavior.

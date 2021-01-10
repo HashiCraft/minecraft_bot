@@ -1,7 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.BehaviorFollow = void 0;
-
 const Movements = require('mineflayer-pathfinder').Movements
 const { GoalFollow } = require('mineflayer-pathfinder').goals
 /**

@@ -1,6 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.BehaviorMineNearbyItems = void 0;
 /**
  * This behavior attempts to find nearby mineable items
  */

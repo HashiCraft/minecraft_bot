@@ -1,10 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.BehaviorFightMobs = void 0;
-/**
- * This behavior will attempt to interact with the target block. If the target
- * block could not be interacted with for any reason, this behavior fails silently.
- */
+const common = require('../common')
+
 class BehaviorFightMobs {
     /**
      * Creates a new mine block behavior.
@@ -112,7 +107,7 @@ class BehaviorFightMobs {
 
       // Only look for mobs within 16 blocks
       const filter = e => e.type === 'mob' && e.position.distanceTo(this.bot.entity.position) < 16 &&
-      e.mobType !== 'Armor Stand' // Mojang classifies armor stands as mobs for some reason?
+        common.hostileTypes.includes(e.name)
 
       const mob = this.bot.nearestEntity(filter)
       if (mob) {
