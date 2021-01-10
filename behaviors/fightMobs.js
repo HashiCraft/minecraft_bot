@@ -96,20 +96,13 @@ class BehaviorFightMobs {
     }
     
     equipWeaponsAndFight(mob, sword, shield) {
-      this.bot.equip(sword, 'hand', (error) => {
-        if(error) {
-          console.log('Unable to equip sword', error)
-        }
-     
-        if(shield) {
-          this.bot.equip(shield, 'off-hand', (error) => {
-            if(error) {
-              console.log('Unable to equip shield', error)
-            }
+      const swordEquip = this.bot.equip(sword, 'hand')     
+      const shieldEquip = this.bot.equip(shield, 'off-hand')     
 
-            this.bot.pvp.attack(mob)
-          })
-        }
+      Promise.allSettled([swordEquip,shieldEquip]).then(() => {
+        this.bot.pvp.attack(mob)
+      }).catch((error) => {
+        console.log("Error equipping")
       })
     }
     

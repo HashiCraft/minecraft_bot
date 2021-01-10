@@ -108,6 +108,7 @@ class Miner {
         // can we see the mob try to look at its block
         const block = self.bot.blockAt(mob.position)
         if(block && self.bot.canSeeBlock(block)) {
+          console.log('Oh a', mob.name)
           return true
         }
       }
