@@ -229,8 +229,7 @@ class Miner {
 
   setupEvents() {
     const bot = this.bot
-    const self = this
-    bot.on('whisper', function(username, message) {
+    bot.on('whisper', (username, message) => {
       
       const messageParts = message.split(' ')
       
@@ -256,7 +255,7 @@ class Miner {
       }
       
       if (message === 'drop') {
-        self.dropItems()
+        this.dropItems()
         bot.chat('Oh sure, I have nothing better to do that interrupt my work with a trip to the chest')
       }
       
@@ -270,12 +269,13 @@ class Miner {
         }
       
         bot.chat('Stay still, follow me, defend me, now go to ' + messageParts[1])
-        self.goto(sa[0], sa[1], sa[2])
+        this.goto(sa[0], sa[1], sa[2])
       }
       
       if (message === 'follow') {
         const target = bot.players[username].entity
-        self.targets.followEntity = target
+        this.targets.followEntity = target
+
         bot.chat('Whatever you say, following you ' + username)
         
         this.setNewState(common.STATE_FOLLOW)
@@ -283,14 +283,14 @@ class Miner {
       
       if (message === 'defend') {
         const target = bot.players[username].entity
-        self.targets.followEntity = target
+        this.targets.followEntity = target
         bot.chat('Your meat shield now am I ' + username + '?')
         
         this.setNewState(common.STATE_DEFEND)
       }
       
       if (message === 'stop') {
-        self.stop()
+        this.stop()
         console.log("stop")
         bot.chat('What? I can quit? Finally I can watch that episode of Stampy Big Nose')
       }
@@ -305,11 +305,11 @@ class Miner {
           return
         }
 
-        self.setMineStart(sa[0], sa[1], sa[2])
-        self.setMineEnd(ea[0], ea[1], ea[2])
+        this.setMineStart(sa[0], sa[1], sa[2])
+        this.setMineEnd(ea[0], ea[1], ea[2])
         
         bot.chat("I have set the mining area to " + messageParts[2] + " " + messageParts[3])
-        console.log(self.targets)
+        console.log(this.targets)
       }
       
       if (messageParts.length === 3 && messageParts[1] === "tools") {
@@ -320,7 +320,7 @@ class Miner {
           return
         }
 
-        self.setEquipmentChestLocation(tools[0], tools[1], tools[2])
+        this.setEquipmentChestLocation(tools[0], tools[1], tools[2])
         bot.chat("I have set the tools chest location to " + messageParts[2])
       }
       
@@ -332,7 +332,7 @@ class Miner {
           return
         }
 
-        self.setDropOffChestLocation(drop[0], drop[1], drop[2])
+        this.setDropOffChestLocation(drop[0], drop[1], drop[2])
         bot.chat("I have set the drop off chest location to " + messageParts[2])
       }
     })
@@ -354,14 +354,13 @@ class Miner {
 
       if(self.state === common.STATE_DEAD) {
         bot.chat('Oh, so I die in the line of duty and you expect me to get right back to work? Wow, the compassion')
-        self.state = self.prevState
-        self.prevState = common.STATE_DEAD
+        this.state = self.prevState
+        this.prevState = common.STATE_DEAD
 
-        if(self.state === common.STATE_STOPPED)
-          self.setKillTimer()
+        if(this.state === common.STATE_STOPPED)
+          this.setKillTimer()
       }
     })
-
   }
 
   setMineStart(x,y,z) {
@@ -460,7 +459,7 @@ class Miner {
     const miningRoot = createRootState(this.bot, this.defaultMove, this.targets)
     const idle = new BehaviorIdle();
     const idleEnd = new BehaviorIdle();
-    const follow = createFollowState(this.bot, this.targets)
+    const follow = createFollowState(this.bot, this.defaultMove, this.targets)
     const defend = createDefendState(this.bot, this.targets)
     const drop = createDropState(this.bot, this.targets)
     const goto = new BehaviorMoveTo(this.bot, this.targets)

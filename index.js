@@ -65,10 +65,9 @@ app.get('/health', (req, res) => {
 })
 
 app.post('/bot', (req, res) => {
-  const jb = req.body
-  // create the settings
-  var s = rootSettings
-  console.log(jb)
+  const jb = req.body // get custom settings from the request
+  var s = rootSettings // create the settings
+  
   
   if(jb) {
     s = {
@@ -82,11 +81,15 @@ app.post('/bot', (req, res) => {
   }
 
   const miner = new Miner()
+  
   // add the bot to the collection
   const id = uuidv4()
   bots.set(id, miner)
 
+  console.log('Create new bot id: ', id, 'with settings:', s)
+  
   miner.createBot(s, () => {
+    console.log('Bot started id:', id)
     res.send(
       {
         id: id,

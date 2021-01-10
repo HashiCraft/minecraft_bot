@@ -5,18 +5,16 @@ const {
 } = require('mineflayer-statemachine');
   
 const BehaviorFollow = require('../behaviors/follow.js');
-const BehaviorEatMelon = require('../behaviors/eatMelon');
 
 // sub state to fetch any required tools
-function createFollowState(bot, targets) {
+function createFollowState(bot, movements, targets) {
   const myTargets = {
     entity: targets.followEntity
   }
 
   const idle = new BehaviorIdle();
   const idleEnd = new BehaviorIdle();
-  const follow = new BehaviorFollow(bot, myTargets)
-  const eatMelon = new BehaviorEatMelon(bot, targets)
+  const follow = new BehaviorFollow(bot, movements, myTargets)
 
   const transitions = [
     new StateTransition({
@@ -25,25 +23,9 @@ function createFollowState(bot, targets) {
         name: "get a pickaxe",
         shouldTransition: () => true,
         onTransition: () => {
-          console.log("followState.follow_target"),
+          console.log("followState.follow_target", targets.followEntity),
           myTargets.entity = targets.followEntity
         }
-    }),
-
-    // eat
-    new StateTransition({
-        parent: follow,
-        child: eatMelon,
-        name: "eat some tasty melon",
-        shouldTransition: () => bot.isHungry() && bot.hasFood(),
-        onTransition: () => console.log("followState.eat_melon"),
-    }),
-    
-    new StateTransition({
-        parent: eatMelon,
-        child: idle,
-        shouldTransition: () => eatMelon.isFinished(),
-        onTransition: () => console.log("followState.idle"),
     }),
   
     new StateTransition({

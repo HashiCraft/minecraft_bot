@@ -15,26 +15,23 @@ class BehaviorFollow {
      * @param bot - The bot preforming the mining function.
      * @param targets - The bot targets objects.
      */
-    constructor(bot, targets) {
+    constructor(bot, movements, targets) {
         this.stateName = 'follow';
         this.active = false;
         this.cancelled = false;
         this.bot = bot;
         this.targets = targets;
 
-        this.defaultMove = new Movements(this.bot, this.bot.mcData)
-        this.defaultMove.allowFreeMotion = true
-        this.defaultMove.canDig = false
-       
-        const self = this
+        this.movements = movements
+
         this.bot.on('death', () => {
-          if (self.cancelled)
+          if (this.cancelled)
             return
 
-          if(!self.active)
+          if(!this.active)
             return
 
-          self.onStateExited()
+          this.onStateExited()
         })
     }
     
@@ -49,7 +46,7 @@ class BehaviorFollow {
         return
       }
 
-      this.bot.pathfinder.setMovements(this.defaultMove)
+      this.bot.pathfinder.setMovements(this.movements)
       this.bot.pathfinder.setGoal(new GoalFollow(this.targets.entity, 3), true)
     }
 
